@@ -1,0 +1,2212 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This is a Global Compute template with all the compute resources. This Template works for Windows, Amazon linux and Ubuntu ami's 
+
+Mappings:
+  RegionMap:
+    us-east-1:
+      Value: 127311923021
+    us-east-2:
+      Value: 033677994240
+    us-west-1:
+      Value: 027434742980
+    us-west-2:
+      Value: 797873946194
+    af-south-1:
+      Value: 098369216593
+    ca-central-1:
+      Value: 985666609251
+    eu-central-1:
+      Value: 054676820928
+    eu-west-1:
+      Value: 156460612806
+    eu-west-2:
+      Value: 652711504416
+    eu-south-1:
+      Value: 635631232127
+    eu-west-3:
+      Value: 009996457667
+    eu-north-1:
+      Value: 897822967062
+    ap-east-1:
+      Value: 754344448648
+    ap-northeast-1:
+      Value: 582318560864
+    ap-northeast-2:
+      Value: 600734575887
+    ap-northeast-3:
+      Value: 383597477331
+    ap-southeast-1:
+      Value: 114774131450
+    ap-southeast-2:
+      Value: 783225319266
+    ap-south-1:
+      Value: 718504428378
+    me-south-1:
+      Value: 076674570225
+    sa-east-1:
+      Value: 507241528517
+    us-gov-west-1:
+      Value: 048591011584
+    us-gov-east-1:
+      Value: 190560391635
+    cn-north-1:
+      Value: 638102146993
+    cn-northwest-1:
+      Value: 037604701340
+
+Metadata: 
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: Provide the Environment Name and Project Name for the tags.
+      Parameters:
+      - ProjectName
+      - Environment
+    - Label:
+        default: Network Configurations for Autoscaling Group, Application Load Balancer
+      Parameters: 
+      - VPCName
+      - PrivateSubnet
+      - PublicSubnet
+      - SecurityGroupForInstances
+    - Label:
+        default: Common Compute Configurations that are required by Autoscaling Group, Application Load Balancer
+      Parameters:  
+      # - LaunchInstanceAs
+      - LaunchInstanceIn
+      - CustomMetricsS3BucketName
+      - InstanceType
+      - InstanceName
+      - MachineType
+      - Timezone
+      - Region
+      - ImageIds
+      - ImageIdManual
+      - ImageId2016
+      - ImageId2019
+      - ImageId2022
+      - ImageIdAmazonLinux2
+      - ImageIdAmazonLinux2023
+      - ImageIdUbuntu
+      - KeyName
+      - DeviceBlockName
+      - VolumeSizeFortheDevice
+      - DeleteVolumeOnTermination
+      - VolumeEncryption
+      - EbsOptimisation
+      - Tenancy
+    - Label:
+        default: Provide the Details if you want File System attachment or AD integration
+      Parameters:
+      - ADIntegration
+      - ADDirectoryId
+      - ADDirectoryName
+      - ADDnsIpAddresses1
+      - ADDnsIpAddresses2
+      - EnableFS
+      - FSName
+      - FSSubnetA
+      - FSSubnetB
+      - FSSubnetC
+      # - FSSubnetD
+      - FSmountpoint
+      - FSSecurityGroupID
+      - SecretARN
+      - FSxStorageCapacity
+      - FSxThroughputCapacity
+      - CommandToExecuteBeforeAttach
+      - CommandToExecuteAfterAttach
+    - Label:
+        default: ASG Configurations
+      Parameters: 
+      - ASGName     
+      - DeploymentType
+      - LaunchConfigName
+      - LaunchTemplateName
+      - MaxSizeForASG
+      - MinSizeForASG
+      - DesiredInstanceCountForASG
+      - HealthCheckTypeInASG 
+      - HealthCheckGracePeriodInASG
+      - TerminationPoliciesForASG
+    - Label:
+        default: Application Load Balancer Configurations
+      Parameters:
+      - LoadBalancer   
+      - LoadBalancerName
+      - LoadBalancerScheme
+      - EnableSSL
+      - ListenerCertificateArn
+      - ALBSecurityGroup
+      - EnableALBLogs
+      - S3BucketForALBLogs
+      - PrefixForALBLogs
+      - CreateThisS3BucketForMe
+      - DeletionProtectionForLoadBalancer
+      - TargetGroupName
+      - TargetGroupPortNo
+      - LoadBalancerDeregistrationDelay
+
+    ParameterLabels:
+      ProjectName:
+        default: ProjectName
+      Environment:
+        default: Environment
+      VPCName:
+         default: VPC Name
+      PrivateSubnet:
+        default: Private Subnet
+      PublicSubnet:
+        default: Public Subnet
+      SecurityGroupForInstances:
+        default: Security Group for Instances
+      # LaunchInstanceAs:
+        # default: Launch Instance As
+      LaunchInstanceIn:
+        default: Launch Instance In
+      CustomMetricsS3BucketName:
+        default: Custom Metrics S3 Bucket Name
+      InstanceType:
+        default: Instance Type
+      MachineType:
+        default: Machine Type
+      Timezone:
+        default: Timezone
+      Region:
+        default: Region
+      ImageIds:
+        default: ImageIds
+      ImageIdManual:
+        default: ImageIdManual
+      ImageId2016:
+        default: ImageId2016
+      ImageId2019:
+        default: ImageId2019
+      ImageId2022:
+        default: ImageId2022
+      ImageIdAmazonLinux2:
+        default: ImageIdAmazonLinux2
+      ImageIdAmazonLinux2023:
+        default: ImageIdAmazonLinux2023
+      ImageIdUbuntu:
+        default: ImageIdUbuntu
+      ImageIdUbuntu18:
+        default: ImageIdUbuntu18
+      ImageIdUbuntu20:
+        default: ImageIdUbuntu20
+      ImageIdUbuntu22:
+        default: ImageIdUbuntu22
+      ImageIdUbuntu24:
+        default: ImageIdUbuntu24
+      KeyName:
+        default: Key Name
+      DeviceBlockName:
+        default: Device Block Name
+      VolumeSizeFortheDevice:
+        default: Volume Size For the Device
+      DeleteVolumeOnTermination:
+        default: Delete volume on Termination
+      VolumeEncryption:
+        default: Volume Encryption
+      EbsOptimisation:
+        default: Ebs Optimisation
+      ASGName:
+        default: ASG Name
+      DeploymentType:
+        default: Deployment Type
+      LaunchConfigName:
+        default: Launch Configuration Name
+      LaunchTemplateName:
+        default: Launch Template Name
+      MaxSizeForASG:
+        default: Maximum Size for ASG
+      MinSizeForASG:
+        default: Minimum Size for ASG
+      DesiredInstanceCountForASG:
+        default: Desired Instance Count for ASG
+      HealthCheckTypeInASG:
+        default: Health Check Type in ASG
+      HealthCheckGracePeriodInASG:
+        default: Health Check Grace Period in ASG
+      TerminationPoliciesForASG:
+        default: Termination Policies for ASG
+      InstanceName:
+        default: Instance Name
+      LoadBalancerName:
+        default: Load Balancer Name
+      LoadBalancerScheme:
+        default: Load Balancer Scheme
+      EnableSSL:
+        default: Enable SSL
+      ListenerCertificateArn:
+        default: Listener Certificate Arn
+      ALBSecurityGroup:
+        default: ALB Security Group
+      EnableALBLogs:
+        default: Enable ALB Logs
+      S3BucketForALBLogs:
+        default: S3 Bucket For ALB Logs
+      PrefixForALBLogs:
+        default: Prefix For ALB Logs
+      CreateThisS3BucketForMe:
+        default: Create this S3 Bucket for Me
+      DeletionProtectionForLoadBalancer:
+        default: Deletion protection for LoadBalancer
+      TargetGroupName:
+        default: Target group Name
+      TargetGroupPortNo:
+        default: Target Group Port Number
+      LoadBalancerDeregistrationDelay:
+        default: Load Balancer Deregistration Delay
+
+Parameters:
+  ProjectName:
+    Description: Enter the Project name
+    Type: String
+  Environment:
+    Description: Enter the Environment name
+    Type: String
+    Default: Dev    
+  VPCName:
+    Description: Select the VPC where the resources are to be provisioned.
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-0cab583c0d2eb2191
+  PrivateSubnet:
+    Description: Select the Private Subnets that are required by the ASG and ALB.
+    Type: List<AWS::EC2::Subnet::Id>
+  PublicSubnet:
+    Description: Select the Public Subnets that are required by the ASG and ALB.
+    Type: List<AWS::EC2::Subnet::Id>
+  LoadBalancer:
+    Description: Do you want to add an application load balancer?
+    Type: String
+    Default: "yes"
+    AllowedValues:
+    - 'yes'
+    - 'no'
+  LoadBalancerName:
+    Description: The Name of Load Balancer that is to be provisioned
+    Type: String
+    Default: 'IN-Enabler-ALB'
+  LoadBalancerScheme:
+    Description: 'Indicates whether the load balancer in front of the EC2 service is internet-facing or internal.'
+    Type: String
+    Default: 'internet-facing'
+    AllowedValues:
+    - 'internet-facing'
+    - 'internal'
+  ALBSecurityGroup:
+    Description: Select the Security Group for Internet Facing Application Load Balancer
+    Type: String
+    Default: 'sg-02c1fc34e3e4daccf'
+  EnableALBLogs:
+   Type: String
+   Default: 'false'
+   AllowedValues:
+   - 'true'
+   - 'false'
+  S3BucketForALBLogs:
+    Description: "This bucket can exist or we can create it for you."
+    Type: String
+    Default: in-enabler-prod-albogs
+  PrefixForALBLogs:
+    Description: "The prefix for the location in the S3 bucket for the access logs. If you don't specify a prefix, the access logs are stored in the root of the bucket.(Example: S3Bucket/prefix)"
+    Type: String
+    Default: "IN-Enabler-Prod-aws/ALBlogs"
+  CreateThisS3BucketForMe:
+    Type: String
+    Description: Do you need us to create above mentioned s3 bucket for you?
+    Default: 'no'
+    AllowedValues:
+    - 'yes'
+    - 'no'
+  EnableSSL:
+    Type: String
+    Description: Do you want to enable https and add certificate?
+    AllowedValues:
+    - 'yes'
+    - 'no'
+    Default: 'no'
+  DeletionProtectionForLoadBalancer:
+    Description: "Enable or Disable the Termination Protection for LoadBalancer"
+    Type: String
+    AllowedValues:
+      - false
+      - true
+    Default: false
+  TargetGroupName:
+    Type: String
+    Default: IN-Target-Group
+    Description: Enter the Name of TargetGroup that is to be attached to the load balancer
+  TargetGroupPortNo:
+    Type: String
+    Default: 80
+    Description: Enter the port number for ALB's target group
+  LoadBalancerDeregistrationDelay:
+    Description: 'The amount time (in seconds) to wait before changing the state of a deregistering target from draining to unused.'
+    Type: Number
+    Default: 60
+    ConstraintDescription: 'Must be in the range [0-3600]'
+    MinValue: 0
+    MaxValue: 3600
+  ListenerCertificateArn:
+    Description: The default SSL server certificate arn for the listener
+    Type: String
+    Default: arn:aws:acm:us-west-2:108970575545:certificate/0125c8b7-bd0d-4bef-b165-7d798e40260f
+  
+  DeploymentType:
+    Description: Create Autoscaling group using Launch Template or Launch Configuration
+    Type: String
+    Default: LaunchTemplate
+    AllowedValues:
+    - 'LaunchTemplate'
+    - 'LaunchConfiguration'
+  LaunchTemplateName:
+    Description: Enter the name of Launch Template (Not required if Launch Configuration is chosen)
+    Type: String
+    Default: IN-Enabler-LaunchTemplate
+  KeyName:
+    Description: Select the Key pair that is used to login into the instance.
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: enabler-key
+  ImageIds:
+    Description: Select an option to provide the AMIID(2016/2019/2022 for windows, AmazonLinux2, AmazonLinux2023, Ubuntu or Manually can pass the ID for any OS)
+    Type: String
+    Default: Pass-AMI-Manually
+    AllowedValues:
+    - 'Windows-Latest-AMI-2022'
+    - 'Windows-Latest-AMI-2019'
+    - 'Windows-Latest-AMI-2016'
+    - 'AmazonLinux2-Latest-AMI'
+    - 'AmazonLinux2023-Latest-AMI'
+    - 'Ubuntu-Latest-AMI'
+    - 'Ubuntu18-Latest-AMI'
+    - 'Ubuntu20-Latest-AMI'
+    - 'Ubuntu22-Latest-AMI'
+    - 'Ubuntu24-Latest-AMI'
+    - 'Pass-AMI-Manually'
+
+  ImageIdManual:
+    Description: Enter the Image ID manually required for the Instances, if you have choosen Pass-AMI-Manually. 
+    Type: String
+
+  ImageId2016:
+    Description: Latest AMI ID for Windows 2016 will be pulled from SSM Parameter store. Don't pass anything here, Based on the "ImageIds" input It will fetch the value.
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: '/aws/service/ami-windows-latest/Windows_Server-2016-English-Full-Base'
+
+  ImageId2019:
+    Description: Latest AMI ID for Widnows 2019 will be pulled from SSM Parameter store. Don't pass anything here, Based on the "ImageIds" input It will fetch the value.
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base'
+
+  ImageId2022:
+    Description: Latest AMI ID for Windows 2022 will be pulled from SSM Parameter store. Don't pass anything here, Based on the "ImageIds" input It will fetch the value.
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: '/aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base'
+
+  ImageIdAmazonLinux2:
+    Description: Latest AMI ID for Amazon Linux 2 will be pulled from SSM Parameter store.Don't pass anything here, Based on the "ImageIds" input It will fetch the value.
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-kernel-5.10-hvm-x86_64-gp2'
+
+  ImageIdAmazonLinux2023:
+    Description: Latest AMI ID for Amazon Linux 2023 will be pulled from SSM Parameter store. Don't pass anything here, Based on the "ImageIds" input It will fetch the value.
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: '/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64'
+
+  ImageIdUbuntu:
+    Description: Latest AMI ID for Ubuntu 18.04 will be pulled from SSM Parameter store. Don't pass anything here, Based on the "ImageIds" input It will fetch the value.
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: '/aws/service/canonical/ubuntu/server/bionic/stable/current/amd64/hvm/ebs-gp2/ami-id'
+
+  ImageIdUbuntu18:
+    Description: Latest AMI ID for Ubuntu 18.04 will be pulled from SSM Parameter store. Don't pass anything here, Based on the "ImageIds" input It will fetch the value.
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: '/aws/service/canonical/ubuntu/server/bionic/stable/current/amd64/hvm/ebs-gp2/ami-id'
+
+  ImageIdUbuntu20:
+    Description: Latest AMI ID for Ubuntu 20.04 will be pulled from SSM Parameter store. Don't pass anything here, Based on the "ImageIds" input It will fetch the value.
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: '/aws/service/canonical/ubuntu/server/focal/stable/current/amd64/hvm/ebs-gp2/ami-id'
+
+  ImageIdUbuntu22:
+    Description: Latest AMI ID for Ubuntu 22.04 will be pulled from SSM Parameter store. Don't pass anything here, Based on the "ImageIds" input It will fetch the value.
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: '/aws/service/canonical/ubuntu/server/jammy/stable/current/amd64/hvm/ebs-gp2/ami-id'
+
+  ImageIdUbuntu24:
+    Description: Latest AMI ID for Ubuntu 24.04 will be pulled from SSM Parameter store. Don't pass anything here, Based on the "ImageIds" input It will fetch the value.
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: '/aws/service/canonical/ubuntu/server/noble/stable/current/amd64/hvm/ebs-gp2/ami-id'
+  SecurityGroupForInstances:
+    Type: List<AWS::EC2::SecurityGroup::Id>
+    Description: Select the required security for AutoScaling Group]
+    Default: sg-02c1fc34e3e4daccf
+  LaunchInstanceIn:
+   Description: Do you want instances launched by Autoscaling group in private or public subnet ?
+   Type: String
+   Default: NoValue
+   AllowedValues:
+   - 'Private'
+   - 'Public'
+   - 'NoValue' 
+  InstanceType:
+    Description: Select the Instance type.
+    Type: String
+    AllowedValues:
+      - a1.2xlarge
+      - a1.4xlarge
+      - a1.large
+      - a1.medium
+      - a1.metal
+      - a1.xlarge
+      - c1.medium
+      - c1.xlarge
+      - c3.2xlarge
+      - c3.4xlarge
+      - c3.8xlarge
+      - c3.large
+      - c3.xlarge
+      - c4.2xlarge
+      - c4.4xlarge
+      - c4.8xlarge
+      - c4.large
+      - c4.xlarge
+      - c5.12xlarge
+      - c5.18xlarge
+      - c5.24xlarge
+      - c5.2xlarge
+      - c5.4xlarge
+      - c5.9xlarge
+      - c5.large
+      - c5.metal
+      - c5.xlarge
+      - c5a.12xlarge
+      - c5a.16xlarge
+      - c5a.24xlarge
+      - c5a.2xlarge
+      - c5a.4xlarge
+      - c5a.8xlarge
+      - c5a.large
+      - c5a.xlarge
+      - c5d.12xlarge
+      - c5d.18xlarge
+      - c5d.24xlarge
+      - c5d.2xlarge
+      - c5d.4xlarge
+      - c5d.9xlarge
+      - c5d.large
+      - c5d.metal
+      - c5d.xlarge
+      - c5n.18xlarge
+      - c5n.2xlarge
+      - c5n.4xlarge
+      - c5n.9xlarge
+      - c5n.large
+      - c5n.xlarge
+      - c6g.12xlarge
+      - c6g.16xlarge
+      - c6g.2xlarge
+      - c6g.4xlarge
+      - c6g.8xlarge
+      - c6g.large
+      - c6g.medium
+      - c6g.metal
+      - c6g.xlarge
+      - cc1.4xlarge
+      - cc2.8xlarge
+      - cg1.4xlarge
+      - cr1.8xlarge
+      - d2.2xlarge
+      - d2.4xlarge
+      - d2.8xlarge
+      - d2.xlarge
+      - f1.16xlarge
+      - f1.2xlarge
+      - f1.4xlarge
+      - g2.2xlarge
+      - g2.8xlarge
+      - g3.16xlarge
+      - g3.4xlarge
+      - g3.8xlarge
+      - g3s.xlarge
+      - g4dn.12xlarge
+      - g4dn.16xlarge
+      - g4dn.2xlarge
+      - g4dn.4xlarge
+      - g4dn.8xlarge
+      - g4dn.metal
+      - g4dn.xlarge
+      - h1.16xlarge
+      - h1.2xlarge
+      - h1.4xlarge
+      - h1.8xlarge
+      - hi1.4xlarge
+      - hs1.8xlarge
+      - i2.2xlarge
+      - i2.4xlarge
+      - i2.8xlarge
+      - i2.xlarge
+      - i3.16xlarge
+      - i3.2xlarge
+      - i3.4xlarge
+      - i3.8xlarge
+      - i3.large
+      - i3.metal
+      - i3.xlarge
+      - i3en.12xlarge
+      - i3en.24xlarge
+      - i3en.2xlarge
+      - i3en.3xlarge
+      - i3en.6xlarge
+      - i3en.large
+      - i3en.metal
+      - i3en.xlarge
+      - inf1.24xlarge
+      - inf1.2xlarge
+      - inf1.6xlarge
+      - inf1.xlarge
+      - m1.large
+      - m1.medium
+      - m1.small
+      - m1.xlarge
+      - m2.2xlarge
+      - m2.4xlarge
+      - m2.xlarge
+      - m3.2xlarge
+      - m3.large
+      - m3.medium
+      - m3.xlarge
+      - m4.10xlarge
+      - m4.16xlarge
+      - m4.2xlarge
+      - m4.4xlarge
+      - m4.large
+      - m4.xlarge
+      - m5.12xlarge
+      - m5.16xlarge
+      - m5.24xlarge
+      - m5.2xlarge
+      - m5.4xlarge
+      - m5.8xlarge
+      - m5.large
+      - m5.metal
+      - m5.xlarge
+      - m5a.12xlarge
+      - m5a.16xlarge
+      - m5a.24xlarge
+      - m5a.2xlarge
+      - m5a.4xlarge
+      - m5a.8xlarge
+      - m5a.large
+      - m5a.xlarge
+      - m5ad.12xlarge
+      - m5ad.16xlarge
+      - m5ad.24xlarge
+      - m5ad.2xlarge
+      - m5ad.4xlarge
+      - m5ad.8xlarge
+      - m5ad.large
+      - m5ad.xlarge
+      - m5d.12xlarge
+      - m5d.16xlarge
+      - m5d.24xlarge
+      - m5d.2xlarge
+      - m5d.4xlarge
+      - m5d.8xlarge
+      - m5d.large
+      - m5d.metal
+      - m5d.xlarge
+      - m5dn.12xlarge
+      - m5dn.16xlarge
+      - m5dn.24xlarge
+      - m5dn.2xlarge
+      - m5dn.4xlarge
+      - m5dn.8xlarge
+      - m5dn.large
+      - m5dn.xlarge
+      - m5n.12xlarge
+      - m5n.16xlarge
+      - m5n.24xlarge
+      - m5n.2xlarge
+      - m5n.4xlarge
+      - m5n.8xlarge
+      - m5n.large
+      - m5n.xlarge
+      - m6g.12xlarge
+      - m6g.16xlarge
+      - m6g.2xlarge
+      - m6g.4xlarge
+      - m6g.8xlarge
+      - m6g.large
+      - m6g.medium
+      - m6g.metal
+      - m6g.xlarge
+      - p2.16xlarge
+      - p2.8xlarge
+      - p2.xlarge
+      - p3.16xlarge
+      - p3.2xlarge
+      - p3.8xlarge
+      - p3dn.24xlarge
+      - r3.2xlarge
+      - r3.4xlarge
+      - r3.8xlarge
+      - r3.large
+      - r3.xlarge
+      - r4.16xlarge
+      - r4.2xlarge
+      - r4.4xlarge
+      - r4.8xlarge
+      - r4.large
+      - r4.xlarge
+      - r5.12xlarge
+      - r5.16xlarge
+      - r5.24xlarge
+      - r5.2xlarge
+      - r5.4xlarge
+      - r5.8xlarge
+      - r5.large
+      - r5.metal
+      - r5.xlarge
+      - r5a.12xlarge
+      - r5a.16xlarge
+      - r5a.24xlarge
+      - r5a.2xlarge
+      - r5a.4xlarge
+      - r5a.8xlarge
+      - r5a.large
+      - r5a.xlarge
+      - r5ad.12xlarge
+      - r5ad.16xlarge
+      - r5ad.24xlarge
+      - r5ad.2xlarge
+      - r5ad.4xlarge
+      - r5ad.8xlarge
+      - r5ad.large
+      - r5ad.xlarge
+      - r5d.12xlarge
+      - r5d.16xlarge
+      - r5d.24xlarge
+      - r5d.2xlarge
+      - r5d.4xlarge
+      - r5d.8xlarge
+      - r5d.large
+      - r5d.metal
+      - r5d.xlarge
+      - r5dn.12xlarge
+      - r5dn.16xlarge
+      - r5dn.24xlarge
+      - r5dn.2xlarge
+      - r5dn.4xlarge
+      - r5dn.8xlarge
+      - r5dn.large
+      - r5dn.xlarge
+      - r5n.12xlarge
+      - r5n.16xlarge
+      - r5n.24xlarge
+      - r5n.2xlarge
+      - r5n.4xlarge
+      - r5n.8xlarge
+      - r5n.large
+      - r5n.xlarge
+      - r6g.12xlarge
+      - r6g.16xlarge
+      - r6g.2xlarge
+      - r6g.4xlarge
+      - r6g.8xlarge
+      - r6g.large
+      - r6g.medium
+      - r6g.metal
+      - r6g.xlarge
+      - t1.micro
+      - t2.2xlarge
+      - t2.large
+      - t2.medium
+      - t2.micro
+      - t2.nano
+      - t2.small
+      - t2.xlarge
+      - t3.2xlarge
+      - t3.large
+      - t3.medium
+      - t3.micro
+      - t3.nano
+      - t3.small
+      - t3.xlarge
+      - t3a.2xlarge
+      - t3a.large
+      - t3a.medium
+      - t3a.micro
+      - t3a.nano
+      - t3a.small
+      - t3a.xlarge
+      - u-12tb1.metal
+      - u-18tb1.metal
+      - u-24tb1.metal
+      - u-6tb1.metal
+      - u-9tb1.metal
+      - x1.16xlarge
+      - x1.32xlarge
+      - x1e.16xlarge
+      - x1e.2xlarge
+      - x1e.32xlarge
+      - x1e.4xlarge
+      - x1e.8xlarge
+      - x1e.xlarge
+      - z1d.12xlarge
+      - z1d.2xlarge
+      - z1d.3xlarge
+      - z1d.6xlarge
+      - z1d.large
+      - z1d.metal
+      - z1d.xlarge
+    Default: t2.micro
+  Tenancy:
+    Type: String
+    Default: default
+    Description: The tenancy of the instance. An instance with a tenancy of dedicated runs on single-tenant hardware.
+    AllowedValues:
+      - default
+      - dedicated
+  DeleteVolumeOnTermination:
+    Type: String
+    Default: true
+    Description: Want to Delete the Volume after Termination of Instance?
+    AllowedValues:
+      - 'true'
+      - 'false'
+  ADIntegration:
+    Type: String
+    Default: 'No'
+    AllowedValues:
+      - 'Yes'
+      - 'No'
+  ADDirectoryId:
+    Type: String
+    Description: Active DirectoryId. Eg. d-12345679a     (Ignore if FS is EFS)
+  ADDirectoryName:
+    Type: String
+    Description: Active Directory Name. Eg. my.ad.com    (Ignore if FS is EFS)
+  ADDnsIpAddresses1:
+    Type: String
+    Description: Active Directory DNS 1. Eg. 10.0.0.142  (Ignore if FS is EFS)
+  ADDnsIpAddresses2:
+    Type: String
+    Description: Active Directory DNS 2. Eg. 10.0.0.143  (Ignore if FS is EFS)
+  EnableFS:
+    Type: String
+    Default: 'No'
+    Description: Want to Enable FS?
+    AllowedValues:
+      - 'Yes'
+      - 'No'
+  FSName:
+    Type: String
+    Description: Enter the name for FS
+  FSxStorageCapacity:
+    Type: Number
+    Default: 32
+    ConstraintDescription: 'Must be in the range of 32-64000'
+    MinValue: 32
+    MaxValue: 64000
+  FSxThroughputCapacity:
+    Type: Number
+    Default: 16
+    ConstraintDescription: 'Must be in the range of 32-64000'
+    MinValue: 8
+    MaxValue: 100000
+  FSSecurityGroupID:
+    Type: String
+    Description: Enter the Security group ID to be attached to EFS or FSx
+  CommandToExecuteBeforeAttach:
+    Type: String
+    Description: Enter the bash commands before attaching
+  CommandToExecuteAfterAttach:
+    Type: String
+    Description: Enter the bash commands after attaching
+  FSSubnetA:
+    Description: Choose the first subnet for EFS or FSx should be mounted to (Subnets should be same as mentioned for ASG)
+    Type: AWS::EC2::Subnet::Id
+  FSSubnetB:
+    Description: Choose the second subnet for EFS or FSx should be mounted to (Subnets should be same as mentioned for ASG)
+    Type: AWS::EC2::Subnet::Id
+  FSSubnetC:
+    Description: Enter the third subnet for EFS that should be mounted to (Not required if your instances are deployed in only two subnets)
+    Type: AWS::EC2::Subnet::Id
+  # FSSubnetD: 
+  #   Description: Enter the Fourth subnet EFS should be mounted to  
+  #   Type: AWS::EC2::Subnet::Id 
+  FSmountpoint:
+    Type: String
+    Description: Enter the path to be attached
+  SecretARN:
+    Type: String
+    Description: Enter the ARN of the secret which stores the password for Admin user of AD
+  VolumeEncryption: 
+    Type: String
+    Default: true
+    AllowedValues:
+     - 'true'
+     - 'false'
+    Description: Want to Encrypt device Volume ?
+  VolumeSizeFortheDevice:
+    Type: String
+    Description: Select the Volume Size that is required fo the Device.
+    Default: '20'
+  LaunchConfigName:
+    Description: Enter the name of Launch Configuration.(Not required if Launch template is chosen)
+    Type: String
+    Default: IN-Enabler-LaunchConfig
+  MachineType:
+    Type: String
+    Description: Select the type of Operating system 'Ubuntu' or 'Amazon Linux 2 AMI'.
+    Default: 'amazon-linux-2'
+    AllowedValues:
+    - 'ubuntu'
+    - 'amazon-linux-2'
+    - 'Windows'
+  Timezone:
+    Type: String
+    Description: Provide the Timezone for your instance( Example:"India Standard Time"(Chennai, Kolkata, Mumbai, New Delhi))
+    Default: 'India Standard Time'
+  Region:
+    Type: String
+    Description: Provide the region to deploy the "CodeDeploy Agent".
+    Default: 'ap-south-1'
+  ASGName:
+    Description: The Name of Autoscaling Group.
+    Type: String
+    Default: IN-Enabler-ASG
+  MaxSizeForASG:
+    Type: Number
+    Default: 1
+    Description: Select the maximum number of Instances required to be in the AutoScalingGroup.
+  MinSizeForASG:
+    Type: Number
+    Default: 1
+    Description: Select the minimum number of Instances required to be in the AutoScalingGroup.
+  DesiredInstanceCountForASG:
+    Type: Number
+    Default: 1
+    Description: Select the desired instance count in the AutoScaling Group
+  HealthCheckTypeInASG:
+    Type: String
+    Description: The Health Check type for Instances in AutoScaling Group
+    AllowedValues:
+      - ELB
+      - EC2
+    Default: EC2
+  HealthCheckGracePeriodInASG:
+    Type: String
+    Default: '300'
+    Description: Select the HealthCheckGracePeriod in AutoScaling Group
+  TerminationPoliciesForASG:
+    Type: String
+    AllowedValues:
+      - Default
+      - OldestInstance
+      - OldestLaunchConfiguration
+      - NewestInstance
+      - ClosestToNextInstanceHour
+      - OldestLaunchTemplate
+      - AllocationStrategy
+    Default: OldestInstance
+    Description: Priority while Deleting the Instances in AutoScaling Group 
+  InstanceName:
+    Type: String
+    Default: 'IN-Enabler-Instance'
+    Description: Provide the Name for your Ec2 instance.
+  DeviceBlockName:
+    Type: String
+    Default: /dev/xvda
+    Description: Enter the EBS device name. (for Amazonlinux select "/dev/xvda", for Ubuntu and windows select "/dev/sda1")
+
+  EbsOptimisation:
+    Type: String
+    Default: 'true'
+    Description: Want to Enable the Ebs Optimisation?
+    AllowedValues:
+      - 'true'
+      - 'false'
+
+  CustomMetricsS3BucketName:
+    Type: String
+    Description: (Mandatory)S3 bucket name where custom metrics config file is stored.This will be used by your instance for configuring custom metrics.
+    Default: "in-enabler-prod-configfiles123"
+  
+Conditions:
+  HasLoadBalancerSchemeInternal: !Equals [!Ref LoadBalancerScheme, 'internal']
+  # HasLoadBalancer: !Equals [!Ref LoadBalancer, 'yes']
+  EnableLogs: !Equals [ !Ref EnableALBLogs, 'true']
+  NoLogsEnabled: !Equals [ !Ref EnableALBLogs, 'false']
+  CreateNewBucket:  !Equals [!Ref CreateThisS3BucketForMe, 'yes']
+  NewBucketCreation: !And
+   - !Condition EnableLogs
+   - !Condition CreateNewBucket
+  UseExistingBucket: !And
+   - !Condition EnableLogs
+   - !Equals [!Ref CreateThisS3BucketForMe, 'no']
+  # LaunchTypeAsg: !Equals [ !Ref LaunchInstanceAs, 'AutoscalingGroup' ]
+  SSLEnabled: !And [!Equals [ !Ref EnableSSL, 'yes' ],!Equals [!Ref LoadBalancer, 'yes']]
+  NoSSLEnabled: !And [!Equals [ !Ref EnableSSL, 'no' ],!Equals [!Ref LoadBalancer, 'yes']]
+  AsgLaunchTemplate: 
+    !And [!Equals [ !Ref DeploymentType, 'LaunchTemplate'], !Equals [!Ref EnableFS, 'No'], !Or [!Equals [!Ref MachineType, 'ubuntu'],!Equals [!Ref MachineType, 'amazon-linux-2' ]]]
+
+  AsgLaunchTemplateEFS: 
+    !And [!Equals [ !Ref DeploymentType, 'LaunchTemplate'],!Equals [!Ref EnableFS, 'Yes'],
+    !Or [!Equals [!Ref MachineType, 'ubuntu'],!Equals [!Ref MachineType, 'amazon-linux-2' ]]]
+  
+  AsgLaunchTemplateLinuxOrWindows: !Equals [ !Ref DeploymentType, 'LaunchTemplate']
+  
+  AsgLaunchConfigLinuxOrWindows: !Equals [ !Ref DeploymentType, 'LaunchConfiguration']
+    
+  AsgLaunchConfig: 
+    !And [!Equals [ !Ref DeploymentType, 'LaunchConfiguration'],!Equals [!Ref EnableFS, 'No'],
+    !Or [!Equals [!Ref MachineType, 'ubuntu'],!Equals [!Ref MachineType, 'amazon-linux-2' ]]]
+
+  AsgLaunchConfigEFS: 
+    !And [!Equals [ !Ref DeploymentType, 'LaunchConfiguration'],!Equals [!Ref EnableFS, 'Yes'],
+    !Or [!Equals [!Ref MachineType, 'ubuntu'],!Equals [!Ref MachineType, 'amazon-linux-2' ]]]
+
+  AsgLaunchTemplateWindows: 
+    !And [!Equals [ !Ref DeploymentType, 'LaunchTemplate'],!Equals [!Ref EnableFS, 'No'],!Equals [!Ref MachineType, 'Windows' ]]
+  AsgLaunchTemplateWindowsFSxorAD: 
+    !And [!Equals [ !Ref DeploymentType, 'LaunchTemplate'],!Or [!Equals [!Ref EnableFS, 'Yes'],!Equals [!Ref ADIntegration, 'Yes']],!Equals [!Ref MachineType, 'Windows' ]]
+  AsgLaunchConfigWindows: 
+    !And [!Equals [ !Ref DeploymentType, 'LaunchConfiguration'],!Equals [!Ref EnableFS, 'No'],!Equals [!Ref MachineType, 'Windows' ]]
+  AsgLaunchConfigWindowsFSxorAD: 
+    !And [!Equals [ !Ref DeploymentType, 'LaunchConfiguration'],!Or [!Equals [!Ref EnableFS, 'Yes'],!Equals [!Ref ADIntegration, 'Yes']],!Equals [!Ref MachineType, 'Windows' ]]
+
+  WantASGinPublicSubnet: !Equals [!Ref LaunchInstanceIn, 'Public' ]
+  
+  AlbCreationLog: 
+    !And [!Equals [ !Ref EnableALBLogs, 'true'],!Equals [!Ref LoadBalancer, 'yes']]
+  AlbCreationNoLog: 
+    !And [!Equals [ !Ref EnableALBLogs, 'false'],!Equals [!Ref LoadBalancer, 'yes']]
+
+  Windows2016: !Equals [ !Ref ImageIds, 'Windows-Latest-AMI-2016' ]
+  Windows2019: !Equals [ !Ref ImageIds, 'Windows-Latest-AMI-2019' ]
+  Windows2022: !Equals [ !Ref ImageIds, 'Windows-Latest-AMI-2022' ]
+  AmazonLinux2: !Equals [ !Ref ImageIds, 'AmazonLinux2-Latest-AMI' ]
+  AmazonLinux2023: !Equals [ !Ref ImageIds, 'AmazonLinux2023-Latest-AMI' ]
+  Ubuntu: !Equals [ !Ref ImageIds, 'Ubuntu-Latest-AMI' ]
+  Ubuntu18: !Equals [ !Ref ImageIds, 'Ubuntu18-Latest-AMI' ]
+  Ubuntu20: !Equals [ !Ref ImageIds, 'Ubuntu20-Latest-AMI' ]
+  Ubuntu22: !Equals [ !Ref ImageIds, 'Ubuntu22-Latest-AMI' ]
+  Ubuntu24: !Equals [ !Ref ImageIds, 'Ubuntu24-Latest-AMI' ]
+  Pass-Manually: !Equals [ !Ref ImageIds, 'Pass-AMI-Manually' ]
+  EfsConfigure: !And [!Equals [!Ref EnableFS, 'Yes'], !Or [!Equals [!Ref MachineType, 'ubuntu'], !Equals [!Ref MachineType, 'amazon-linux-2' ]]]
+  FsXConfigure: !And [!Equals [!Ref EnableFS, 'Yes'], !Equals [!Ref MachineType, 'Windows' ]]
+  IfWantAD: !Equals [!Ref ADIntegration, 'Yes'] 
+  # EFSmountC: !And [!Equals [!Ref EnableFS, 'Yes'], !Not [!Equals [!Ref FSSubnetC, '']]]
+
+Resources:
+  ApplicationLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Condition: AlbCreationNoLog
+    Properties:
+      LoadBalancerAttributes:
+      - Key: idle_timeout.timeout_seconds
+        Value: 60
+      Name: !Join [ '-', [ !Ref 'ProjectName', !Ref 'Environment', !Ref 'LoadBalancerName' ] ]
+      Scheme: !Ref LoadBalancerScheme
+      SecurityGroups:
+      - Ref: ALBSecurityGroup
+      Subnets: !If [HasLoadBalancerSchemeInternal,!Ref PrivateSubnet , !Ref PublicSubnet ]
+      # Name:
+      #   Ref: LoadBalancerName
+      Tags:
+      - Key: Name
+        Value: !Join [ '-', [ !Ref 'ProjectName', !Ref 'Environment', 'ApplicationLoadBalancer' ] ]
+      Type: application
+      
+  ApplicationLoadBalancerWithLogsEnabled:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Condition: AlbCreationLog
+    Properties:
+      LoadBalancerAttributes:
+      - Key: deletion_protection.enabled
+        Value: !Ref DeletionProtectionForLoadBalancer
+      - Key: access_logs.s3.enabled
+        Value: !Ref EnableALBLogs
+      - Key: access_logs.s3.bucket
+        Value: !If [EnableLogs, !Ref S3BucketForALBLogs, !Ref AWS::NoValue]
+      - Key: access_logs.s3.prefix
+        Value: !Ref PrefixForALBLogs
+      - Key: idle_timeout.timeout_seconds
+        Value: 60
+      Name: !Join [ '-', [ !Ref 'ProjectName', !Ref 'Environment', !Ref 'LoadBalancerName' ] ]
+      Scheme: !Ref LoadBalancerScheme
+      SecurityGroups:
+      - Ref: ALBSecurityGroup
+      Subnets: !If [HasLoadBalancerSchemeInternal,!Ref PrivateSubnet , !Ref PublicSubnet ]
+      # Name:
+      #   Ref: LoadBalancerName
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref 'ProjectName', !Ref 'Environment', 'ApplicationLoadBalancerWithLogsEnabled' ] ]
+      Type: application
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 60
+      HealthCheckPath: "/"
+      Name: !Join [ '-', [ !Ref 'ProjectName', !Ref 'Environment', !Ref 'TargetGroupName' ] ]
+      # Name:
+      #   Ref: TargetGroupName
+      Port: !Ref TargetGroupPortNo
+      Protocol: HTTP
+      TargetGroupAttributes:
+      - Key: deregistration_delay.timeout_seconds
+        Value: !Ref LoadBalancerDeregistrationDelay
+      TargetType: 'instance'
+      UnhealthyThresholdCount: 10
+      VpcId: !Ref VPCName
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [  !Ref 'ProjectName', !Ref 'Environment',  !Ref 'TargetGroupName']]
+
+  Listener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Condition: SSLEnabled
+    Properties:
+      DefaultActions:
+      - Type: "redirect"
+        RedirectConfig:
+           Protocol: "HTTPS"
+           Port: "443"
+           Host: "#{host}"
+           Path: "/#{path}"
+           Query: "#{query}"
+           StatusCode: "HTTP_301"
+      LoadBalancerArn: !If [ EnableLogs, !Ref ApplicationLoadBalancerWithLogsEnabled, !Ref ApplicationLoadBalancer]
+      Port: 80
+      Protocol: "HTTP"
+
+  Listener1:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Condition: SSLEnabled
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: TargetGroup
+      LoadBalancerArn: !If [ EnableLogs, !Ref ApplicationLoadBalancerWithLogsEnabled, !Ref ApplicationLoadBalancer]
+      Port: 443
+      Protocol: "HTTPS"
+      Certificates:
+      - CertificateArn:
+          Ref: ListenerCertificateArn
+      SslPolicy: ELBSecurityPolicy-2016-08
+  Listener2:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Condition: NoSSLEnabled
+    Properties:
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: TargetGroup
+      LoadBalancerArn: !If [ EnableLogs, !Ref ApplicationLoadBalancerWithLogsEnabled, !Ref ApplicationLoadBalancer]
+      Port: 80
+      Protocol: "HTTP"
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Condition: NewBucketCreation
+    Properties:
+      BucketName: !Ref S3BucketForALBLogs
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref 'ProjectName', !Ref 'Environment', !Ref 'S3BucketForALBLogs' ] ]
+    DeletionPolicy: Delete
+  S3BucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Condition: NewBucketCreation
+    Properties:
+      Bucket: !Ref S3BucketForALBLogs
+      PolicyDocument:
+        Statement:
+        -
+          Sid: "GiveAmazonRootAccessToTheBucket"
+          Action:
+            - "s3:PutObject"
+          Effect: "Allow"
+          Resource:
+            Fn::Join:
+              - ""
+              -
+                - "arn:aws:s3:::"
+                - !Ref S3BucketForALBLogs
+                - "/*"
+          Principal:
+            AWS:
+              Fn::Join:
+                - ""
+                -
+                  - "arn:aws:iam::"
+                  -
+                    !FindInMap [RegionMap, !Ref "AWS::Region", Value]
+                  - ":root"
+
+        -
+          Sid: "BucketOwnerFullControl"
+          Action:
+            - "s3:PutObject"
+          Effect: "Allow"
+          Resource:
+            Fn::Join:
+              - ""
+              -
+                - "arn:aws:s3:::"
+                - !Ref S3BucketForALBLogs
+                - "/*"
+          Principal:
+            Service:
+            - delivery.logs.amazonaws.com
+          Condition:
+            StringEquals:
+              s3:x-amz-acl: bucket-owner-full-control
+
+        -
+          Sid: "LogGroupGetBucketACL"
+          Action:
+            - "s3:GetBucketAcl"
+          Effect: "Allow"
+          Resource:
+            Fn::Join:
+              - ""
+              -
+                - "arn:aws:s3:::"
+                - !Ref S3BucketForALBLogs
+          Principal:
+            Service:
+            - delivery.logs.amazonaws.com
+
+  S3BucketPolicyForExistingBucket:
+    Type: 'AWS::S3::BucketPolicy'
+    Condition: UseExistingBucket
+    Properties:
+      Bucket: !Ref S3BucketForALBLogs
+      PolicyDocument:
+        Statement:
+        -
+          Sid: "GiveAmazonRootAccessToTheBucket"
+          Action:
+            - "s3:PutObject"
+          Effect: "Allow"
+          Resource:
+            Fn::Join:
+              - ""
+              -
+                - "arn:aws:s3:::"
+                - !Ref S3BucketForALBLogs
+                - "/*"
+          Principal:
+            AWS:
+              Fn::Join:
+                - ""
+                -
+                  - "arn:aws:iam::"
+                  -
+                    !FindInMap [RegionMap, !Ref "AWS::Region", Value]
+                  - ":root"
+        -
+          Sid: "BucketOwnerFullControl"
+          Action:
+            - "s3:PutObject"
+          Effect: "Allow"
+          Resource:
+            Fn::Join:
+              - ""
+              -
+                - "arn:aws:s3:::"
+                - !Ref S3BucketForALBLogs
+                - "/*"
+          Principal:
+            Service:
+            - delivery.logs.amazonaws.com
+          Condition:
+            StringEquals:
+              s3:x-amz-acl: bucket-owner-full-control
+
+        -
+          Sid: "LogGroupGetBucketACL"
+          Action:
+            - "s3:GetBucketAcl"
+          Effect: "Allow"
+          Resource:
+            Fn::Join:
+              - ""
+              -
+                - "arn:aws:s3:::"
+                - !Ref S3BucketForALBLogs
+          Principal:
+            Service:
+            - delivery.logs.amazonaws.com
+
+
+
+## Launch configuration and Launch template for ubuntu and amazon linux 2 ###
+  AutoScalingLaunchConfig:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Condition: AsgLaunchConfig
+    Properties:
+      KeyName:
+        Ref: KeyName
+      ImageId: !If
+        - Pass-Manually
+        - !Ref ImageIdManual
+        - !If
+          - AmazonLinux2
+          - !Ref ImageIdAmazonLinux2
+          - !If
+            - AmazonLinux2023
+            - !Ref ImageIdAmazonLinux2023
+            - !If
+              - Ubuntu18
+              - !Ref ImageIdUbuntu18
+              - !If
+                - Ubuntu20
+                - !Ref ImageIdUbuntu20
+                - !If
+                  - Ubuntu22
+                  - !Ref ImageIdUbuntu22
+                  - !If
+                    - Ubuntu24
+                    - !Ref ImageIdUbuntu24
+                    - !Ref AWS::NoValue
+      SecurityGroups:
+        Ref: 'SecurityGroupForInstances'
+      InstanceType:
+        Ref: InstanceType
+      Tenancy: !Ref Tenancy
+      IamInstanceProfile:
+        !Ref 'Ec2InstanceProfile'
+      # Tags:
+      #   - Key: Name
+      #     Value: !Join [ '-', [  !Ref 'ProjectName', !Ref 'Environment', !Ref 'InstanceName' ] ]
+      BlockDeviceMappings:
+        - DeviceName: !Ref DeviceBlockName
+          Ebs:
+            DeleteOnTermination: !Ref DeleteVolumeOnTermination
+            Encrypted: !Ref VolumeEncryption
+            VolumeSize: !Ref VolumeSizeFortheDevice
+      LaunchConfigurationName: !Join [ '-', [  !Ref 'ProjectName', !Ref 'Environment', !Ref 'LaunchConfigName' ] ]
+      # LaunchConfigurationName: !Ref LaunchConfigName
+      EbsOptimized: !Ref EbsOptimisation
+      UserData: 
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          export MACHINE_TYPE="${MachineType}"
+          if [ $MACHINE_TYPE == "ubuntu" ]
+          then
+            sudo apt update
+            sudo apt upgrade -y
+            sudo apt install wget -y
+            sudo snap install aws-cli --classic
+            sudo wget wget https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
+            sudo dpkg -i -E ./amazon-cloudwatch-agent.deb
+            sudo apt-get update && apt-get install collectd
+            sudo aws s3 cp s3://${CustomMetricsS3BucketName}/config.json /opt/aws/amazon-cloudwatch-agent/bin/
+            sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s
+            sudo apt install ruby-full -y
+            sudo wget https://aws-codedeploy-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/latest/install
+            sudo chmod +x ./install
+            sudo ./install auto > /tmp/logfile
+            sudo service codedeploy-agent start
+            sudo wget https://inspector-agent.amazonaws.com/linux/latest/install
+            sudo curl -O https://inspector-agent.amazonaws.com/linux/latest/install
+            sudo bash install
+            export EFS_ATTACH="${EnableFS}"
+          else
+            sudo yum update
+            sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+            sudo yum install ruby -y
+            sudo yum install wget -y
+            sudo wget https://aws-codedeploy-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/latest/install
+            sudo chmod +x ./install
+            sudo ./install auto
+            sudo service codedeploy-agent start
+            sudo wget https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
+            sudo rpm -U ./amazon-cloudwatch-agent.rpm
+            sudo aws s3 cp s3://${CustomMetricsS3BucketName}/config.json /opt/aws/amazon-cloudwatch-agent/bin/
+            sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s  
+            sudo wget https://inspector-agent.amazonaws.com/linux/latest/install
+            sudo curl -O https://inspector-agent.amazonaws.com/linux/latest/install
+            sudo bash install
+          fi
+
+  AutoScalingLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Condition: AsgLaunchTemplate
+    Properties:
+      LaunchTemplateName: !Join [ '-', [  !Ref 'ProjectName', !Ref 'Environment', !Ref 'LaunchTemplateName' ] ]
+      LaunchTemplateData:
+        BlockDeviceMappings:
+          - DeviceName: !Ref DeviceBlockName
+            Ebs:
+              DeleteOnTermination: !Ref DeleteVolumeOnTermination
+              VolumeSize: !Ref VolumeSizeFortheDevice
+              Encrypted: !Ref VolumeEncryption
+        EbsOptimized: !Ref EbsOptimisation
+        ImageId: !If
+        - Pass-Manually
+        - !Ref ImageIdManual
+        - !If
+          - AmazonLinux2
+          - !Ref ImageIdAmazonLinux2
+          - !If
+            - AmazonLinux2023
+            - !Ref ImageIdAmazonLinux2023
+            - !If
+              - Ubuntu18
+              - !Ref ImageIdUbuntu18
+              - !If
+                - Ubuntu20
+                - !Ref ImageIdUbuntu20
+                - !If
+                  - Ubuntu22
+                  - !Ref ImageIdUbuntu22
+                  - !If
+                    - Ubuntu24
+                    - !Ref ImageIdUbuntu24
+                    - !Ref AWS::NoValue
+    
+        InstanceType: !Ref InstanceType
+        KeyName: !Ref KeyName
+        SecurityGroupIds: 
+          !Ref 'SecurityGroupForInstances' 
+        Tenancy: !Ref Tenancy
+        IamInstanceProfile:
+          Arn: !GetAtt Ec2InstanceProfile.Arn
+        # Tags:
+        # - Key: Name
+        #   Value: !Join [ '-', [  !Ref 'ProjectName', !Ref 'Environment', !Ref 'InstanceName' ] ]
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            export MACHINE_TYPE="${MachineType}"
+            if [ $MACHINE_TYPE == "ubuntu" ]
+            then
+              sudo apt update
+              sudo apt upgrade -y
+              sudo apt install wget -y
+              sudo snap install aws-cli --classic
+              sudo wget wget https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
+              sudo dpkg -i -E ./amazon-cloudwatch-agent.deb
+              sudo apt-get update && apt-get install collectd
+              sudo aws s3 cp s3://${CustomMetricsS3BucketName}/config.json /opt/aws/amazon-cloudwatch-agent/bin/
+              sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s
+              sudo apt install ruby-full -y
+              sudo wget https://aws-codedeploy-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/latest/install
+              sudo chmod +x ./install
+              sudo ./install auto > /tmp/logfile
+              sudo service codedeploy-agent start
+              sudo wget https://inspector-agent.amazonaws.com/linux/latest/install
+              sudo curl -O https://inspector-agent.amazonaws.com/linux/latest/install
+              export EFS_ATTACH="${EnableFS}"
+              sudo bash install
+            else
+              sudo yum update
+              sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+              sudo yum install ruby -y
+              sudo yum install wget -y
+              sudo wget https://aws-codedeploy-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/latest/install
+              sudo chmod +x ./install
+              sudo ./install auto
+              sudo service codedeploy-agent start
+              sudo wget https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
+              sudo rpm -U ./amazon-cloudwatch-agent.rpm
+              sudo aws s3 cp s3://${CustomMetricsS3BucketName}/config.json /opt/aws/amazon-cloudwatch-agent/bin/
+              sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s  
+              sudo wget https://inspector-agent.amazonaws.com/linux/latest/install
+              sudo curl -O https://inspector-agent.amazonaws.com/linux/latest/install
+              sudo bash install
+            fi
+
+## Launch configuration and Launch template for ubuntu and amazon linux 2 with EFS###
+  AutoScalingLaunchConfigEFS:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Condition: AsgLaunchConfigEFS
+    Properties:
+      KeyName:
+        Ref: KeyName
+      ImageId: !If
+        - Pass-Manually
+        - !Ref ImageIdManual
+        - !If
+          - AmazonLinux2
+          - !Ref ImageIdAmazonLinux2
+          - !If
+            - AmazonLinux2023
+            - !Ref ImageIdAmazonLinux2023
+            - !If
+              - Ubuntu18
+              - !Ref ImageIdUbuntu18
+              - !If
+                - Ubuntu20
+                - !Ref ImageIdUbuntu20
+                - !If
+                  - Ubuntu22
+                  - !Ref ImageIdUbuntu22
+                  - !If
+                    - Ubuntu24
+                    - !Ref ImageIdUbuntu24
+                    - !Ref AWS::NoValue
+      SecurityGroups:
+        Ref: 'SecurityGroupForInstances'
+      InstanceType:
+        Ref: InstanceType
+      Tenancy: !Ref Tenancy
+      IamInstanceProfile:
+        !Ref 'Ec2InstanceProfile'
+      # Tags:
+      #   - Key: Name
+      #     Value: !Join [ '-', [  !Ref 'ProjectName', !Ref 'Environment', !Ref 'InstanceName' ] ]
+      BlockDeviceMappings:
+        - DeviceName: !Ref DeviceBlockName
+          Ebs:
+            DeleteOnTermination: !Ref DeleteVolumeOnTermination
+            Encrypted: !Ref VolumeEncryption
+            VolumeSize: !Ref VolumeSizeFortheDevice
+      LaunchConfigurationName: !Join [ '-', [  !Ref 'ProjectName', !Ref 'Environment', !Ref 'LaunchConfigName' ] ]
+      # LaunchConfigurationName: !Ref LaunchConfigName
+      EbsOptimized: !Ref EbsOptimisation
+      UserData: 
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          export MACHINE_TYPE="${MachineType}"
+          if [ $MACHINE_TYPE == "ubuntu" ]
+          then
+            sudo apt update
+            sudo apt upgrade -y
+            sudo apt install wget -y
+            sudo snap install aws-cli --classic
+            sudo wget wget https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
+            sudo dpkg -i -E ./amazon-cloudwatch-agent.deb
+            sudo apt-get update && apt-get install collectd
+            sudo aws s3 cp s3://${CustomMetricsS3BucketName}/config.json /opt/aws/amazon-cloudwatch-agent/bin/
+            sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s
+            sudo apt install ruby-full -y
+            sudo wget https://aws-codedeploy-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/latest/install
+            sudo chmod +x ./install
+            sudo ./install auto > /tmp/logfile
+            sudo service codedeploy-agent start
+            sudo wget https://inspector-agent.amazonaws.com/linux/latest/install
+            sudo curl -O https://inspector-agent.amazonaws.com/linux/latest/install
+            sudo bash install
+            export EFS_ATTACH="${EnableFS}"
+            if [ $EFS_ATTACH == "Yes" ]
+            then
+              sudo apt-get -y install nfs-common
+              ${CommandToExecuteBeforeAttach}
+              sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,intr,timeo=600,retrans=2 ${EFSFileSystem}.efs.${AWS::Region}.amazonaws.com:/ ${FSmountpoint}
+              echo "${EFSFileSystem}.efs.${AWS::Region}.amazonaws.com:/ ${FSmountpoint} nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,intr,timeo=600,retrans=2,_netdev 0 0" | sudo tee -a /etc/fstab
+              ${CommandToExecuteAfterAttach}
+            fi
+          else
+            sudo yum update
+            sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+            sudo yum install ruby -y
+            sudo yum install wget -y
+            sudo wget https://aws-codedeploy-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/latest/install
+            sudo chmod +x ./install
+            sudo ./install auto
+            sudo service codedeploy-agent start
+            sudo wget https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
+            sudo rpm -U ./amazon-cloudwatch-agent.rpm
+            sudo aws s3 cp s3://${CustomMetricsS3BucketName}/config.json /opt/aws/amazon-cloudwatch-agent/bin/
+            sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s  
+            sudo wget https://inspector-agent.amazonaws.com/linux/latest/install
+            sudo curl -O https://inspector-agent.amazonaws.com/linux/latest/install
+            sudo bash install
+            export EFS_ATTACH="${EnableFS}"
+            if [ $EFS_ATTACH == "Yes" ]
+            then 
+              sudo yum install amazon-efs-utils -y
+              ${CommandToExecuteBeforeAttach}
+              sudo mount -t efs -o tls ${EFSFileSystem}:/ ${FSmountpoint}
+              echo "${EFSFileSystem}:/ ${FSmountpoint} efs _netdev,tls 0 0" | sudo tee -a /etc/fstab
+              ${CommandToExecuteAfterAttach}
+            fi
+          fi
+
+  AutoScalingLaunchTemplateEFS:
+    Type: AWS::EC2::LaunchTemplate
+    Condition: AsgLaunchTemplateEFS
+    Properties:
+      LaunchTemplateName: !Join [ '-', [  !Ref 'ProjectName', !Ref 'Environment', !Ref 'LaunchTemplateName' ] ]
+      LaunchTemplateData:
+        BlockDeviceMappings:
+          - DeviceName: !Ref DeviceBlockName
+            Ebs:
+              DeleteOnTermination: !Ref DeleteVolumeOnTermination
+              VolumeSize: !Ref VolumeSizeFortheDevice
+              Encrypted: !Ref VolumeEncryption
+        EbsOptimized: !Ref EbsOptimisation
+        ImageId: !If
+        - Pass-Manually
+        - !Ref ImageIdManual
+        - !If
+          - AmazonLinux2
+          - !Ref ImageIdAmazonLinux2
+          - !If
+            - AmazonLinux2023
+            - !Ref ImageIdAmazonLinux2023
+            - !If
+              - Ubuntu18
+              - !Ref ImageIdUbuntu18
+              - !If
+                - Ubuntu20
+                - !Ref ImageIdUbuntu20
+                - !If
+                  - Ubuntu22
+                  - !Ref ImageIdUbuntu22
+                  - !If
+                    - Ubuntu24
+                    - !Ref ImageIdUbuntu24
+                    - !Ref AWS::NoValue
+    
+        InstanceType: !Ref InstanceType
+        KeyName: !Ref KeyName
+        SecurityGroupIds: 
+          !Ref 'SecurityGroupForInstances' 
+        Tenancy: !Ref Tenancy
+        IamInstanceProfile:
+          Arn: !GetAtt Ec2InstanceProfile.Arn
+        # Tags:
+        # - Key: Name
+        #   Value: !Join [ '-', [  !Ref 'ProjectName', !Ref 'Environment', !Ref 'InstanceName' ] ]
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            export MACHINE_TYPE="${MachineType}"
+            if [ $MACHINE_TYPE == "ubuntu" ]
+            then
+              sudo apt update
+              sudo apt upgrade -y
+              sudo apt install wget -y
+              sudo snap install aws-cli --classic
+              sudo wget wget https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
+              sudo dpkg -i -E ./amazon-cloudwatch-agent.deb
+              sudo apt-get update && apt-get install collectd
+              sudo aws s3 cp s3://${CustomMetricsS3BucketName}/config.json /opt/aws/amazon-cloudwatch-agent/bin/
+              sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s
+              sudo apt install ruby-full -y
+              sudo wget https://aws-codedeploy-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/latest/install
+              sudo chmod +x ./install
+              sudo ./install auto > /tmp/logfile
+              sudo service codedeploy-agent start
+              sudo wget https://inspector-agent.amazonaws.com/linux/latest/install
+              sudo curl -O https://inspector-agent.amazonaws.com/linux/latest/install
+              export EFS_ATTACH="${EnableFS}"
+              if [ $EFS_ATTACH == "Yes" ]
+              then
+                sudo apt-get -y install nfs-common
+                ${CommandToExecuteBeforeAttach}
+                sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,intr,timeo=600,retrans=2 ${EFSFileSystem}.efs.${AWS::Region}.amazonaws.com:/ ${FSmountpoint}
+                echo "${EFSFileSystem}.efs.${AWS::Region}.amazonaws.com:/ ${FSmountpoint} nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,intr,timeo=600,retrans=2,_netdev 0 0" | sudo tee -a /etc/fstab
+                ${CommandToExecuteAfterAttach}
+              fi
+              sudo bash install
+            else
+              sudo yum update
+              sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+              sudo yum install ruby -y
+              sudo yum install wget -y
+              sudo wget https://aws-codedeploy-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/latest/install
+              sudo chmod +x ./install
+              sudo ./install auto
+              sudo service codedeploy-agent start
+              sudo wget https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
+              sudo rpm -U ./amazon-cloudwatch-agent.rpm
+              sudo aws s3 cp s3://${CustomMetricsS3BucketName}/config.json /opt/aws/amazon-cloudwatch-agent/bin/
+              sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s  
+              sudo wget https://inspector-agent.amazonaws.com/linux/latest/install
+              sudo curl -O https://inspector-agent.amazonaws.com/linux/latest/install
+              sudo bash install
+              export EFS_ATTACH="${EnableFS}"
+              if [ $EFS_ATTACH == "Yes" ]
+              then 
+                sudo yum install amazon-efs-utils -y
+                ${CommandToExecuteBeforeAttach}
+                sudo mount -t efs -o tls ${EFSFileSystem}:/ ${FSmountpoint}
+                echo "${EFSFileSystem}:/ ${FSmountpoint} efs _netdev,tls 0 0" | sudo tee -a /etc/fstab
+                ${CommandToExecuteAfterAttach}
+              fi
+            fi
+#-------------------------------------------Windows Launch Config and launch Template --------------------------------#
+  AutoScalingLaunchConfigWindows:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Condition: AsgLaunchConfigWindows
+    Properties:
+      KeyName:
+        Ref: KeyName
+      ImageId: !If
+        - Pass-Manually
+        - !Ref ImageIdManual
+        - !If
+          - Windows2016
+          - !Ref ImageId2016
+          - !If
+            - Windows2019
+            - !Ref ImageId2019
+            - !If
+              - Windows2022
+              - !Ref ImageId2022
+              - !Ref AWS::NoValue
+      SecurityGroups:
+        Ref: 'SecurityGroupForInstances'
+      InstanceType:
+        Ref: InstanceType
+      Tenancy: !Ref Tenancy
+      IamInstanceProfile:
+        !Ref 'Ec2InstanceProfile'
+      # Tags:
+      #   - Key: Name
+      #     Value: !Join [ '-', [ !Ref 'ProjectName', !Ref 'Environment', !Ref 'InstanceName' ] ]
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sda1"
+          Ebs:
+            DeleteOnTermination: !Ref DeleteVolumeOnTermination
+            Encrypted: !Ref VolumeEncryption
+            VolumeSize: !Ref VolumeSizeFortheDevice
+      EbsOptimized: !Ref EbsOptimisation
+      LaunchConfigurationName: !Join [ '-', [  !Ref 'ProjectName', !Ref 'Environment', !Ref 'LaunchConfigName' ] ]
+      # LaunchConfigurationName: !Ref LaunchConfigName
+      UserData:
+        Fn::Base64: !Sub |
+          <powershell>
+          # TO Set timezone 
+          $TIME_ZONE= "${Timezone}" 
+          Set-TimeZone -Name $TIME_ZONE
+          Start-Sleep -s 10
+          # To install AWSCLIV2
+          $command = "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12"
+          Invoke-Expression $command
+          Invoke-WebRequest -Uri "https://awscli.amazonaws.com/AWSCLIV2.msi" -Outfile C:\AWSCLIV2.msi
+          Start-Sleep -s 60
+          $arguments = "/i `"C:\AWSCLIV2.msi`" /quiet"
+          Start-Process msiexec.exe -ArgumentList $arguments -Wait
+          $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")
+          # To install CloudWatch Agent
+          wget https://s3.amazonaws.com/amazoncloudwatch-agent/windows/amd64/latest/amazon-cloudwatch-agent.msi  -OutFile C:\Users\Administrator\Downloads\amazon-cloudwatch-agent.msi
+          Start-Sleep -s 200
+          msiexec /i C:\Users\Administrator\Downloads\amazon-cloudwatch-agent.msi
+          Start-Sleep -s 30
+          $BUCKET_NAME = "${CustomMetricsS3BucketName}"
+          aws s3 cp s3://$BUCKET_NAME/config-windows.json 'C:\Program Files\Amazon\AmazonCloudWatchAgent\config-windows.json'
+          & "C:\Program Files\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent-ctl.ps1" -a fetch-config -m ec2 -s -c file:"C:\Program Files\Amazon\AmazonCloudWatchAgent\config-windows.json"
+          Start-Sleep -s 10
+          # TO get the Region to install the codedeploy agent
+          $REGION= "${Region}" 
+          # To install CodeDeploy Agent
+          wget https://s3.$REGION.amazonaws.com/aws-codedeploy-$REGION/latest/codedeploy-agent.msi  -OutFile C:\Users\Administrator\Downloads\amazon-codedeploy-agent.msi
+          Start-Sleep -s 200
+          msiexec /i C:\Users\Administrator\Downloads\amazon-codedeploy-agent.msi 
+          Start-Sleep -s 30
+          </powershell>
+
+  AutoScalingLaunchTemplateWindows:
+    Type: AWS::EC2::LaunchTemplate
+    Condition: AsgLaunchTemplateWindows
+    Properties:
+      LaunchTemplateName: !Join [ '-', [  !Ref 'ProjectName', !Ref 'Environment', !Ref 'LaunchTemplateName' ] ]
+      LaunchTemplateData:
+        BlockDeviceMappings:
+          - DeviceName: "/dev/sda1"
+            Ebs:
+              DeleteOnTermination: !Ref DeleteVolumeOnTermination
+              VolumeSize: !Ref VolumeSizeFortheDevice
+              Encrypted: !Ref VolumeEncryption
+        EbsOptimized: !Ref EbsOptimisation
+        ImageId: !If
+        - Pass-Manually
+        - !Ref ImageIdManual
+        - !If
+          - Windows2016
+          - !Ref ImageId2016
+          - !If
+            - Windows2019
+            - !Ref ImageId2019
+            - !If
+              - Windows2022
+              - !Ref ImageId2022
+              - !Ref AWS::NoValue
+        InstanceType: !Ref InstanceType
+        KeyName: !Ref KeyName
+        SecurityGroupIds: 
+          !Ref 'SecurityGroupForInstances' 
+        Tenancy: !Ref Tenancy
+        IamInstanceProfile:
+          Arn: !GetAtt Ec2InstanceProfile.Arn
+        # Tags:
+        # - Key: Name
+        #   Value: !Join [ '-', [  !Ref 'ProjectName', !Ref 'Environment', !Ref 'InstanceName' ] ]
+        UserData:
+          Fn::Base64: !Sub |
+            <powershell>
+            # TO Set timezone 
+            $TIME_ZONE= "${Timezone}" 
+            Set-TimeZone -Name $TIME_ZONE
+            Start-Sleep -s 10
+            # To install AWSCLIV2
+            $command = "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12"
+            Invoke-Expression $command
+            Invoke-WebRequest -Uri "https://awscli.amazonaws.com/AWSCLIV2.msi" -Outfile C:\AWSCLIV2.msi
+            Start-Sleep -s 60
+            $arguments = "/i `"C:\AWSCLIV2.msi`" /quiet"
+            Start-Process msiexec.exe -ArgumentList $arguments -Wait
+            $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")
+            # To install CloudWatch Agent
+            wget https://s3.amazonaws.com/amazoncloudwatch-agent/windows/amd64/latest/amazon-cloudwatch-agent.msi  -OutFile C:\Users\Administrator\Downloads\amazon-cloudwatch-agent.msi
+            Start-Sleep -s 200
+            msiexec /i C:\Users\Administrator\Downloads\amazon-cloudwatch-agent.msi
+            Start-Sleep -s 30
+            $BUCKET_NAME = "${CustomMetricsS3BucketName}"
+            aws s3 cp s3://$BUCKET_NAME/config-windows.json 'C:\Program Files\Amazon\AmazonCloudWatchAgent\config-windows.json'
+            & "C:\Program Files\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent-ctl.ps1" -a fetch-config -m ec2 -s -c file:"C:\Program Files\Amazon\AmazonCloudWatchAgent\config-windows.json"
+            Start-Sleep -s 10
+            # TO get the Region to install the codedeploy agent
+            $REGION= "${Region}" 
+            # To install CodeDeploy Agent
+            wget https://s3.$REGION.amazonaws.com/aws-codedeploy-$REGION/latest/codedeploy-agent.msi  -OutFile C:\Users\Administrator\Downloads\amazon-codedeploy-agent.msi
+            Start-Sleep -s 200
+            msiexec /i C:\Users\Administrator\Downloads\amazon-codedeploy-agent.msi 
+            Start-Sleep -s 30
+            </powershell>
+
+#-------------------------------------------Windows Launch Config and launch Template with FSx--------------------------------#
+  AutoScalingLaunchConfigWindowsFSx:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Condition: AsgLaunchConfigWindowsFSxorAD
+    Properties:
+      KeyName:
+        Ref: KeyName
+      ImageId: !If
+        - Pass-Manually
+        - !Ref ImageIdManual
+        - !If
+          - Windows2016
+          - !Ref ImageId2016
+          - !If
+            - Windows2019
+            - !Ref ImageId2019
+            - !If
+              - Windows2022
+              - !Ref ImageId2022
+              - !Ref AWS::NoValue
+      SecurityGroups:
+        Ref: 'SecurityGroupForInstances'
+      InstanceType:
+        Ref: InstanceType
+      IamInstanceProfile:
+        !Ref 'Ec2InstanceProfile'
+      Tenancy: !Ref Tenancy
+      # Tags:
+      #   - Key: Name
+      #     Value: !Join [ '-', [ !Ref 'ProjectName', !Ref 'Environment', !Ref 'InstanceName' ] ]
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sda1"
+          Ebs:
+            DeleteOnTermination: !Ref DeleteVolumeOnTermination
+            Encrypted: !Ref VolumeEncryption
+            VolumeSize: !Ref VolumeSizeFortheDevice
+      EbsOptimized: !Ref EbsOptimisation
+      LaunchConfigurationName: !Join [ '-', [  !Ref 'ProjectName', !Ref 'Environment', !Ref 'LaunchConfigName' ] ]
+      # LaunchConfigurationName: !Ref LaunchConfigName
+      UserData:
+        Fn::Base64: !Sub |
+          <powershell>
+          # TO Set timezone 
+          $TIME_ZONE= "${Timezone}" 
+          Set-TimeZone -Name $TIME_ZONE
+          Start-Sleep -s 10
+          # To install AWSCLIV2
+          $command = "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12"
+          Invoke-Expression $command
+          Invoke-WebRequest -Uri "https://awscli.amazonaws.com/AWSCLIV2.msi" -Outfile C:\AWSCLIV2.msi
+          Start-Sleep -s 60
+          $arguments = "/i `"C:\AWSCLIV2.msi`" /quiet"
+          Start-Process msiexec.exe -ArgumentList $arguments -Wait
+          $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")
+          # To install CloudWatch Agent
+          wget https://s3.amazonaws.com/amazoncloudwatch-agent/windows/amd64/latest/amazon-cloudwatch-agent.msi  -OutFile C:\Users\Administrator\Downloads\amazon-cloudwatch-agent.msi
+          Start-Sleep -s 200
+          msiexec /i C:\Users\Administrator\Downloads\amazon-cloudwatch-agent.msi
+          Start-Sleep -s 30
+          $BUCKET_NAME = "${CustomMetricsS3BucketName}"
+          aws s3 cp s3://$BUCKET_NAME/config-windows.json 'C:\Program Files\Amazon\AmazonCloudWatchAgent\config-windows.json'
+          & "C:\Program Files\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent-ctl.ps1" -a fetch-config -m ec2 -s -c file:"C:\Program Files\Amazon\AmazonCloudWatchAgent\config-windows.json"
+          Start-Sleep -s 10
+          # TO get the Region to install the codedeploy agent
+          $REGION= "${Region}" 
+          # To install CodeDeploy Agent
+          wget https://s3.$REGION.amazonaws.com/aws-codedeploy-$REGION/latest/codedeploy-agent.msi  -OutFile C:\Users\Administrator\Downloads\amazon-codedeploy-agent.msi
+          Start-Sleep -s 200
+          msiexec /i C:\Users\Administrator\Downloads\amazon-codedeploy-agent.msi 
+          Start-Sleep -s 30
+          $fsxsetup = "${EnableFS}"
+          if ($fsxsetup -eq "Yes") {
+            echo '$User = "${ADDirectoryName}\admin"' > C:\script.ps1
+            echo '$PWord = ConvertTo-SecureString -String "$($secretOutput = aws secretsmanager get-secret-value --secret-id "${SecretARN}" --query SecretString --output text;$secretObject = ConvertFrom-Json $secretOutput;$password = $secretObject.password;Write-Output $password)" -AsPlainText -Force' >> C:\script.ps1
+            echo '$Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $User, $PWord' >> C:\script.ps1
+            echo 'New-SmbGlobalMapping -LocalPath ${FSmountpoint} -RemotePath \\${FsxForWindows.DNSName}\share -Credential $Credential -Persistent $true' >> C:\script.ps1
+            echo 'schtasks /delete /tn AttachFSxTask /f' >> C:\script.ps1
+            echo 'Remove-Item -Path C:\script.ps1 -Force' >> C:\script.ps1
+            echo 'shutdown -r -t 0' >> C:\script.ps1
+            $taskName = "AttachFSxTask"
+            $scriptPath = "C:\script.ps1"
+            $action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-ExecutionPolicy Bypass -File `"$scriptPath`""
+            $trigger = New-ScheduledTaskTrigger -AtStartup
+            $Settings = New-ScheduledTaskSettingsSet 
+            $Task = New-ScheduledTask -Action $Action -Trigger $Trigger -Settings $Settings   
+            Register-ScheduledTask -TaskName $taskName -InputObject $Task -User 'SYSTEM'
+          }
+          $adsetup = "${ADIntegration}"
+          if ($adsetup -eq "Yes") {aws ssm create-association --name ${adssmdocument} --instance-id $(curl http://169.254.169.254/latest/meta-data/instance-id -UseBasicParsing) --parameters directoryId=${ADDirectoryId},directoryName=${ADDirectoryName},dnsIpAddresses=${ADDnsIpAddresses1},${ADDnsIpAddresses2}}
+          Start-Sleep -s 30
+          </powershell>
+
+  AutoScalingLaunchTemplateWindowsFSx:
+    Type: AWS::EC2::LaunchTemplate
+    Condition: AsgLaunchTemplateWindowsFSxorAD
+    Properties:
+      LaunchTemplateName: !Join [ '-', [  !Ref 'ProjectName', !Ref 'Environment', !Ref 'LaunchTemplateName' ] ]
+      LaunchTemplateData:
+        BlockDeviceMappings:
+          - DeviceName: "/dev/sda1"
+            Ebs:
+              DeleteOnTermination: !Ref DeleteVolumeOnTermination
+              VolumeSize: !Ref VolumeSizeFortheDevice
+              Encrypted: !Ref VolumeEncryption
+        EbsOptimized: !Ref EbsOptimisation
+        ImageId: !If
+        - Pass-Manually
+        - !Ref ImageIdManual
+        - !If
+          - Windows2016
+          - !Ref ImageId2016
+          - !If
+            - Windows2019
+            - !Ref ImageId2019
+            - !If
+              - Windows2022
+              - !Ref ImageId2022
+              - !Ref AWS::NoValue
+        InstanceType: !Ref InstanceType
+        KeyName: !Ref KeyName
+        SecurityGroupIds: 
+          !Ref 'SecurityGroupForInstances' 
+        IamInstanceProfile:
+          Arn: !GetAtt Ec2InstanceProfile.Arn
+        Tenancy: !Ref Tenancy
+        # Tags:
+        # - Key: Name
+        #   Value: !Join [ '-', [  !Ref 'ProjectName', !Ref 'Environment', !Ref 'InstanceName' ] ]
+        UserData:
+          Fn::Base64: !Sub |
+            <powershell>
+            # TO Set timezone 
+            $TIME_ZONE= "${Timezone}" 
+            Set-TimeZone -Name $TIME_ZONE
+            Start-Sleep -s 10
+            # To install AWSCLIV2
+            $command = "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12"
+            Invoke-Expression $command
+            Invoke-WebRequest -Uri "https://awscli.amazonaws.com/AWSCLIV2.msi" -Outfile C:\AWSCLIV2.msi
+            Start-Sleep -s 60
+            $arguments = "/i `"C:\AWSCLIV2.msi`" /quiet"
+            Start-Process msiexec.exe -ArgumentList $arguments -Wait
+            $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")
+            # To install CloudWatch Agent
+            wget https://s3.amazonaws.com/amazoncloudwatch-agent/windows/amd64/latest/amazon-cloudwatch-agent.msi  -OutFile C:\Users\Administrator\Downloads\amazon-cloudwatch-agent.msi
+            Start-Sleep -s 200
+            msiexec /i C:\Users\Administrator\Downloads\amazon-cloudwatch-agent.msi
+            Start-Sleep -s 30
+            $BUCKET_NAME = "${CustomMetricsS3BucketName}"
+            aws s3 cp s3://$BUCKET_NAME/config-windows.json 'C:\Program Files\Amazon\AmazonCloudWatchAgent\config-windows.json'
+            & "C:\Program Files\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent-ctl.ps1" -a fetch-config -m ec2 -s -c file:"C:\Program Files\Amazon\AmazonCloudWatchAgent\config-windows.json"
+            Start-Sleep -s 10
+            # TO get the Region to install the codedeploy agent
+            $REGION= "${Region}" 
+            # To install CodeDeploy Agent
+            wget https://s3.$REGION.amazonaws.com/aws-codedeploy-$REGION/latest/codedeploy-agent.msi  -OutFile C:\Users\Administrator\Downloads\amazon-codedeploy-agent.msi
+            Start-Sleep -s 200
+            msiexec /i C:\Users\Administrator\Downloads\amazon-codedeploy-agent.msi 
+            Start-Sleep -s 30
+            $fsxsetup = "${EnableFS}"
+            if ($fsxsetup -eq "Yes") {
+              echo '$User = "${ADDirectoryName}\admin"' > C:\script.ps1
+              echo '$PWord = ConvertTo-SecureString -String "$($secretOutput = aws secretsmanager get-secret-value --secret-id "${SecretARN}" --query SecretString --output text;$secretObject = ConvertFrom-Json $secretOutput;$password = $secretObject.password;Write-Output $password)" -AsPlainText -Force' >> C:\script.ps1
+              echo '$Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $User, $PWord' >> C:\script.ps1
+              echo 'New-SmbGlobalMapping -LocalPath ${FSmountpoint} -RemotePath \\${FsxForWindows.DNSName}\share -Credential $Credential -Persistent $true' >> C:\script.ps1
+              echo 'schtasks /delete /tn AttachFSxTask /f' >> C:\script.ps1
+              echo 'Remove-Item -Path C:\script.ps1 -Force' >> C:\script.ps1
+              echo 'shutdown -r -t 0' >> C:\script.ps1
+              $taskName = "AttachFSxTask"
+              $scriptPath = "C:\script.ps1"
+              $action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-ExecutionPolicy Bypass -File `"$scriptPath`""
+              $trigger = New-ScheduledTaskTrigger -AtStartup
+              $Settings = New-ScheduledTaskSettingsSet 
+              $Task = New-ScheduledTask -Action $Action -Trigger $Trigger -Settings $Settings   
+              Register-ScheduledTask -TaskName $taskName -InputObject $Task -User 'SYSTEM'
+            }
+            $adsetup = "${ADIntegration}"
+            if ($adsetup -eq "Yes") {aws ssm create-association --name ${adssmdocument} --instance-id $(curl http://169.254.169.254/latest/meta-data/instance-id -UseBasicParsing) --parameters directoryId=${ADDirectoryId},directoryName=${ADDirectoryName},dnsIpAddresses=${ADDnsIpAddresses1},${ADDnsIpAddresses2}}
+            Start-Sleep -s 30
+            </powershell>
+
+
+#--------------------------- AutoScaling Group-----------------------------#
+  AutoScalingGroupWithLC:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Condition: AsgLaunchConfigLinuxOrWindows
+    Properties:
+      AutoScalingGroupName: !Join [ '-', [ !Ref 'ProjectName', !Ref 'Environment', !Ref 'ASGName' ] ]
+      Tags:
+      - Key: Name
+        Value: !Join [ '-', [ !Ref 'ProjectName', !Ref 'Environment', !Ref 'InstanceName' ] ]
+        PropagateAtLaunch: true
+      - Key: USER
+        Value: gagan.srinath@axcess.io
+        PropagateAtLaunch: true
+      - Key: APP
+        Value: asset
+        PropagateAtLaunch: true
+      - Key: PLANNED_END_DATE
+        Value: 23-01-2026
+        PropagateAtLaunch: true
+      LaunchConfigurationName: !If [AsgLaunchConfig, !Ref AutoScalingLaunchConfig, !If [AsgLaunchConfigEFS, !Ref AutoScalingLaunchConfigEFS, !If [AsgLaunchConfigWindowsFSxorAD, !Ref AutoScalingLaunchConfigWindowsFSx, !Ref AutoScalingLaunchConfigWindows  ]]] 
+      MaxSize: !Ref MaxSizeForASG
+      MinSize: !Ref MinSizeForASG
+      DesiredCapacity: !Ref DesiredInstanceCountForASG
+      HealthCheckType: !Ref HealthCheckTypeInASG
+      HealthCheckGracePeriod: !Ref HealthCheckGracePeriodInASG
+      TerminationPolicies: [!Ref 'TerminationPoliciesForASG']
+      TargetGroupARNs:
+      - Ref: TargetGroup
+      VPCZoneIdentifier: !If [ WantASGinPublicSubnet, !Ref PublicSubnet ,!Ref PrivateSubnet ] 
+  AutoScalingGroupWithLaunchTemplate:
+    Condition: AsgLaunchTemplateLinuxOrWindows
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: !Join [ '-', [ !Ref 'ProjectName', !Ref 'Environment', !Ref 'ASGName' ] ]
+      Tags:
+      - Key: Name
+        Value: !Join [ '-', [ !Ref 'ProjectName', !Ref 'Environment', !Ref 'InstanceName' ] ]
+        PropagateAtLaunch: true
+      - Key: USER
+        Value: gagan.srinath@axcess.io
+        PropagateAtLaunch: true
+      - Key: APP
+        Value: asset
+        PropagateAtLaunch: true
+      - Key: PLANNED_END_DATE
+        Value: 23-01-2026
+        PropagateAtLaunch: true
+      LaunchTemplate:
+        LaunchTemplateId: !If [AsgLaunchTemplate, !Ref AutoScalingLaunchTemplate, !If [AsgLaunchTemplateEFS, !Ref AutoScalingLaunchTemplateEFS, !If [AsgLaunchTemplateWindowsFSxorAD, !Ref AutoScalingLaunchTemplateWindowsFSx,!Ref AutoScalingLaunchTemplateWindows ]]]
+        Version: !If [AsgLaunchTemplate, !GetAtt AutoScalingLaunchTemplate.LatestVersionNumber, !If [AsgLaunchTemplateEFS, !GetAtt AutoScalingLaunchTemplateEFS.LatestVersionNumber, !If [AsgLaunchTemplateWindowsFSxorAD, !GetAtt AutoScalingLaunchTemplateWindowsFSx.LatestVersionNumber, !GetAtt AutoScalingLaunchTemplateWindows.LatestVersionNumber ]]]
+      MaxSize: !Ref MaxSizeForASG
+      MinSize: !Ref MinSizeForASG
+      DesiredCapacity: !Ref DesiredInstanceCountForASG
+      HealthCheckType: !Ref HealthCheckTypeInASG
+      HealthCheckGracePeriod: !Ref HealthCheckGracePeriodInASG
+      TerminationPolicies: [!Ref 'TerminationPoliciesForASG']
+      TargetGroupARNs:
+      - Ref: TargetGroup
+      VPCZoneIdentifier: !If [ WantASGinPublicSubnet, !Ref PublicSubnet ,!Ref PrivateSubnet ]
+#------------------------------ec2 role------------------------------#
+  Ec2InstanceRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      Path: /
+      RoleName: !Join [ '-', [ !Ref 'ProjectName', !Ref 'Environment', !Ref 'InstanceName', 'ec2-role' ] ]
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: "sts:AssumeRole"
+            Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+
+      ManagedPolicyArns:
+         - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+         - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+         - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforAWSCodeDeploy
+         - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
+  Ec2InstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+       Path: "/"
+       Roles:
+         - Ref: "Ec2InstanceRole"
+       InstanceProfileName: !Join [ '-', [ !Ref 'ProjectName', !Ref 'Environment', !Ref 'InstanceName', 'Ec2-Instance-Profile' ] ]
+  Ec2S3Policy:
+    Type: AWS::IAM::Policy
+    Properties: 
+      PolicyName: !Join [ '-', [ !Ref 'ProjectName', !Ref 'Environment', 's3access' ] ]
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: 's3:GetObject'
+            Resource: !Sub 'arn:aws:s3:::${CustomMetricsS3BucketName}/*'
+          - Effect: Allow
+            Action: ssm:CreateAssociation
+            Resource: '*'
+          - Effect: Allow
+            Action: secretsmanager:GetSecretValue
+            Resource: '*'
+      Roles: 
+        - !Ref Ec2InstanceRole
+##-----------------------Create-EFS----------------------------##
+  EFSSecurityGroup:
+    Condition: EfsConfigure
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId: !Ref VPCName
+      GroupDescription: Allow inbound NFS traffic from EC2 instances
+      SecurityGroupIngress:
+        - SourceSecurityGroupId: !Select [0, !Ref SecurityGroupForInstances]
+          IpProtocol: tcp
+          FromPort: 2049
+          ToPort: 2049
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref 'ProjectName', !Ref 'Environment', !Ref FSName ] ]
+
+  EFSFileSystem:
+    Condition: EfsConfigure
+    Type: 'AWS::EFS::FileSystem'
+    Properties:
+      PerformanceMode: generalPurpose
+      Encrypted: true
+      FileSystemTags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref 'ProjectName', !Ref 'Environment', !Ref FSName ] ]
+
+  EFSMountTargetA:
+    Condition: EfsConfigure
+    DependsOn: EFSFileSystem
+    Type: 'AWS::EFS::MountTarget'
+    Properties:
+      FileSystemId: !Ref EFSFileSystem
+      SecurityGroups:
+        # - !Ref FSSecurityGroupID
+        - !Ref EFSSecurityGroup
+      SubnetId: !Ref FSSubnetA
+
+  EFSMountTargetB:
+    Condition: EfsConfigure
+    DependsOn: EFSFileSystem
+    Type: 'AWS::EFS::MountTarget'
+    Properties:
+      FileSystemId: !Ref EFSFileSystem
+      SecurityGroups:
+        # - !Ref FSSecurityGroupID
+        - !Ref EFSSecurityGroup
+      SubnetId: !Ref FSSubnetB
+
+  EFSMountTargetC:
+    Condition: EfsConfigure
+    DependsOn: EFSFileSystem
+    Type: 'AWS::EFS::MountTarget'
+    Properties:
+      FileSystemId: !Ref EFSFileSystem
+      SecurityGroups:
+        # - !Ref FSSecurityGroupID
+        - !Ref EFSSecurityGroup
+      SubnetId: !Ref FSSubnetC
+
+  # EFSMountTargetD: 
+  #   Condition: EfsConfigure 
+  #   DependsOn: EFSFileSystem 
+  #   Type: 'AWS::EFS::MountTarget' 
+  #   Properties: 
+  #     FileSystemId: !Ref EFSFileSystem 
+  #     SecurityGroups: 
+  #       - !Ref FSSecurityGroupID
+  #     SubnetId: !Ref FSSubnetD 
+
+##---------------------------Create-FSX--------------------------## 
+
+  WindowsFSXSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Condition: FsXConfigure
+    Properties:
+      GroupDescription: Allow EC2 to access FSX
+      VpcId:
+        Ref: VPCName
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 445 
+          ToPort: 445
+          CidrIp: 0.0.0.0/0 
+        - IpProtocol: tcp
+          FromPort: 5985  
+          ToPort: 5985
+          CidrIp: 0.0.0.0/0 
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref 'ProjectName', !Ref 'Environment', 'FSxSecurityGroup' ] ]
+        
+  FsxForWindows:
+    Type: 'AWS::FSx::FileSystem'
+    Condition: FsXConfigure
+    Properties:
+      FileSystemType: WINDOWS
+      StorageCapacity: !Ref FSxStorageCapacity
+      StorageType: SSD
+      SecurityGroupIds: 
+        # - !Ref FSSecurityGroupID
+        - !Ref WindowsFSXSecurityGroup
+      SubnetIds:
+        - !Ref FSSubnetA
+        - !Ref FSSubnetB
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref 'ProjectName', !Ref 'Environment', !Ref FSName ] ]
+      WindowsConfiguration:
+        ActiveDirectoryId: !Ref ADDirectoryId
+        ThroughputCapacity: !Ref FSxThroughputCapacity
+        WeeklyMaintenanceStartTime: '4:16:30'
+        DailyAutomaticBackupStartTime: '01:00'
+        AutomaticBackupRetentionDays: 90
+        DeploymentType: MULTI_AZ_1
+        PreferredSubnetId: !Ref FSSubnetA
+        CopyTagsToBackups: false
+  adssmdocument:
+    Type: AWS::SSM::Document
+    Condition: IfWantAD
+    Properties:
+      Content:
+        schemaVersion: '1.2'
+        description: Join instances to an AWS Directory Service domain.
+        parameters:
+          directoryId:
+            type: String
+            description: "(Required) The ID of the AWS Directory Service directory."
+          directoryName:
+            type: String
+            description: "(Required) The name of the directory; for example, test.example.com"
+          dnsIpAddresses:
+            type: StringList
+            default: []
+            allowedPattern: "((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
+        runtimeConfig:
+          aws:domainJoin:
+            properties:
+              directoryId: "{{ directoryId }}"
+              directoryName: "{{ directoryName }}"
+              dnsIpAddresses: "{{ dnsIpAddresses }}"
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ !Ref 'ProjectName', !Ref 'Environment', ADAssociationDocument ] ]

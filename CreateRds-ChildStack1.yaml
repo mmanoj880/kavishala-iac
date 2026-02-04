@@ -1,0 +1,352 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "Optimized AWS RDS template for multiple database engines"
+
+Parameters:
+  ProjectName:
+    Type: String
+    Description: Project name for resource naming
+  Environment:
+    Type: String
+    Default: Dev
+    Description: Environment name
+  DBEngineMode:
+    Type: String
+    Default: mysql
+    AllowedValues: [mariadb, mysql, postgres, sqlserver-ee, sqlserver-se, sqlserver-ex, sqlserver-web]
+    Description: Database engine type
+  DBEngineVersion:
+    Type: String
+    Default: '8.0.39'
+    Description: 'Database engine version - MySQL: 8.0.39/5.7.44, MariaDB: 10.11.9, PostgreSQL: 16.4, SQL Server: 16.00.4125.3.v1'
+  DBInstanceIdentifier:
+    Type: String
+    Default: 'demo'
+    Description: Database instance identifier
+  DBName:
+    Type: String
+    Default: 'NewDB'
+    Description: Database name (leave empty for SQL Server)
+  DBMasterUsername:
+    Type: String
+    Default: admin
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_]*"
+    Description: Database master username
+  DBMasterUserPassword:
+    Type: String
+    NoEcho: true
+    AllowedPattern: ^(?=^.{8,255}$)(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])(?!.*[@/"']).*$
+    Description: Database master password
+  DBInstanceClass:
+    Type: String
+    Default: db.t3.micro
+    Description: Database instance class
+  DBAllocatedStorage:
+    Type: String
+    Default: '20'
+    Description: Allocated storage in GB
+  DBMaxAllocatedStorage:
+    Type: Number
+    Default: 100
+    Description: Maximum allocated storage for autoscaling
+  DBStorageType:
+    Type: String
+    Default: gp2
+    AllowedValues: [gp2, gp3, io1, standard]
+    Description: Storage type
+  # Iops:
+  #   Type: String
+  #   Default: '1000'
+  #   Description: IOPS for io1/gp3 storage
+  DBMultiAZ:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+    Description: Multi-AZ deployment
+  DBBackupRetentionPeriod:
+    Type: Number
+    Default: 7
+    MinValue: 1
+    MaxValue: 35
+    Description: Backup retention period in days
+  DBAutoMinorVersionUpgrade:
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+    Description: Enable automatic minor version upgrades
+  DBAutoMajorVersionUpgrade:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+    Description: Enable automatic major version upgrades
+  DBStorageEncrypted:
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+    Description: Enable storage encryption
+  DBDeletionProtection:
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+    Description: Enable deletion protection
+  PubliclyAccessible:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+    Description: Make database publicly accessible
+  EnablePerformanceInsights:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+    Description: Enable Performance Insights
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet::Id
+    Description: Private subnet 1
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet::Id
+    Description: Private subnet 2
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet::Id
+    Description: Public subnet 1
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet::Id
+    Description: Public subnet 2
+  CustomDBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: Security group for database
+  DBPasswordCreationAndRotationFromSecretsManager:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+    Description: Use Secrets Manager for password management
+  SlowQueryTimeThreshold:
+    Type: Number
+    Default: 2
+    Description: Shortest query runtime to be logged in seconds(for MySQL and MariaDB)
+  SlowQueryTimeThresholdPostgreSQL:
+    Type: Number
+    Default: 2000
+    Description: Shortest query runtime to be logged in milliseconds(for PostgreSQL)
+  SlowQueryLog:
+    Type: String
+    Default: '1'
+    Description: Enable or disable slow query logging
+  GeneralLog:
+    Type: String
+    Default: '1'
+    Description: Enable or disable general query logging
+  LogOutput:
+    Type: String
+    Default: 'FILE'
+    Description: Destination for general and slow query logs
+  DBPort:
+    Type: String
+    Default: '3306'
+    Description: Database port
+  DBDeleteAutomatedBackups:
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+    Description: Delete automated backups when instance is deleted
+  CopyTagsToSnapshot:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+    Description: Copy tags to snapshots
+  LicenseModel:
+    Type: String
+    Default: general-public-license
+    AllowedValues: [general-public-license, postgresql-license, license-included]
+    Description: License model
+  PerformanceInsightsRetentionPeriod:
+    Type: Number
+    Default: 7
+    Description: Performance Insights retention period in days
+  DBCloudwatchLogExports:
+    Type: String
+    Default: 'general'
+    Description: CloudWatch log exports (comma-separated)
+  Application:
+    Type: String
+    Default: ''
+    Description: Application name
+  ApplicationVersion:
+    Type: String
+    Default: ''
+    Description: Application version
+  ProjectCostCenter:
+    Type: String
+    Default: ''
+    Description: Project cost center
+  Confidentiality:
+    Type: String
+    Default: ''
+    AllowedValues: [public, private, confidential, 'pii/phi', '']
+    Description: Confidentiality classification
+  Compliance:
+    Type: String
+    Default: ''
+    AllowedValues: [hipaa, sox, fips, other, '']
+    Description: Compliance level
+  CustomParameterGroupFamily:
+    Type: String
+    Default: ''
+    AllowedValues: ['', mysql5.5, mysql5.6, mysql5.7, mysql8.0, mysql8.4, mariadb10.0, mariadb10.1, mariadb10.2, mariadb10.3, mariadb10.4, mariadb10.5, mariadb10.6, mariadb10.11, mariadb11.4, mariadb11.8, postgres9.4, postgres9.5, postgres9.6, postgres10, postgres11, postgres12, postgres13, postgres14, postgres15, postgres16, postgres17, sqlserver-ee-10.5, sqlserver-ee-11.0, sqlserver-ee-12.0, sqlserver-ee-13.0, sqlserver-ee-14.0, sqlserver-ee-15.0, sqlserver-ee-16.0, sqlserver-ex-11.0, sqlserver-ex-12.0, sqlserver-ex-13.0, sqlserver-ex-14.0, sqlserver-ex-15.0, sqlserver-ex-16.0, sqlserver-se-11.0, sqlserver-se-12.0, sqlserver-se-13.0, sqlserver-se-14.0, sqlserver-se-15.0, sqlserver-se-16.0, sqlserver-web-11.0, sqlserver-web-12.0, sqlserver-web-13.0, sqlserver-web-14.0, sqlserver-web-15.0, sqlserver-web-16.0]
+    Description: Custom parameter group family (overrides default mapping)
+
+Conditions:
+  IsPublicAccess: !Equals [!Ref PubliclyAccessible, 'true']
+  IsPerformanceInsights: !Equals [!Ref EnablePerformanceInsights, 'true']
+  IsIOStorage: !Or [!Equals [!Ref DBStorageType, 'io1'], !Equals [!Ref DBStorageType, 'gp3']]
+  IsMySQLEngine: !Equals [!Ref DBEngineMode, 'mysql']
+  IsMariaDBEngine: !Equals [!Ref DBEngineMode, 'mariadb']
+  IsPostgreSQLEngine: !Equals [!Ref DBEngineMode, 'postgres']
+  IsSQLServer: !Or [!Equals [!Ref DBEngineMode, 'sqlserver-se'], !Equals [!Ref DBEngineMode, 'sqlserver-ee'], !Equals [!Ref DBEngineMode, 'sqlserver-ex'], !Equals [!Ref DBEngineMode, 'sqlserver-web']]
+  HasApplication: !Not [!Equals [!Ref Application, '']]
+  HasApplicationVersion: !Not [!Equals [!Ref ApplicationVersion, '']]
+  HasProjectCostCenter: !Not [!Equals [!Ref ProjectCostCenter, '']]
+  HasConfidentiality: !Not [!Equals [!Ref Confidentiality, '']]
+  HasCompliance: !Not [!Equals [!Ref Compliance, '']]
+
+Resources:
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: !Sub "${ProjectName}-${Environment} DB Subnet Group"
+      DBSubnetGroupName: !Sub "${ProjectName}-${Environment}-db-subnet-group"
+      SubnetIds: !If
+        - IsPublicAccess
+        - [!Ref PublicSubnet1, !Ref PublicSubnet2]
+        - [!Ref PrivateSubnet1, !Ref PrivateSubnet2]
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-${Environment}-db-subnet-group"
+
+  MySQLParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Condition: IsMySQLEngine
+    Properties:
+      DBParameterGroupName: !Sub "${ProjectName}-${Environment}-mysql-parameter-group"
+      Description: "MySQL Custom Parameter Group"
+      Family: !Ref CustomParameterGroupFamily
+      Parameters:
+        slow_query_log: !Ref SlowQueryLog
+        general_log: !Ref GeneralLog
+        log_output: !Ref LogOutput
+        long_query_time: !Ref SlowQueryTimeThreshold
+
+  MariaDBParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Condition: IsMariaDBEngine
+    Properties:
+      DBParameterGroupName: !Sub "${ProjectName}-${Environment}-mariadb-parameter-group"
+      Description: "MariaDB Custom Parameter Group"
+      Family: !Ref CustomParameterGroupFamily
+      Parameters:
+        slow_query_log: !Ref SlowQueryLog
+        general_log: !Ref GeneralLog
+        log_output: !Ref LogOutput
+        long_query_time: !Ref SlowQueryTimeThreshold
+
+  PostgreSQLParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Condition: IsPostgreSQLEngine
+    Properties:
+      DBParameterGroupName: !Sub "${ProjectName}-${Environment}-postgresql-parameter-group"
+      Description: "PostgreSQL Custom Parameter Group"
+      Family: !Ref CustomParameterGroupFamily
+      Parameters:
+        log_statement: 'all'
+        log_min_duration_statement: !Ref SlowQueryTimeThresholdPostgreSQL
+
+  SQLServerParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Condition: IsSQLServer
+    Properties:
+      DBParameterGroupName: !Sub "${ProjectName}-${Environment}-sqlserver-parameter-group"
+      Description: "SQL Server Custom Parameter Group"
+      Family: !Ref CustomParameterGroupFamily
+      Parameters: {}
+
+  DBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub "${ProjectName}-${Environment}-${DBInstanceIdentifier}"
+      DBName: !If [IsSQLServer, !Ref 'AWS::NoValue', !Ref DBName]
+      Engine: !Ref DBEngineMode
+      EngineVersion: !Ref DBEngineVersion
+      DBInstanceClass: !Ref DBInstanceClass
+      AllocatedStorage: !Ref DBAllocatedStorage
+      MaxAllocatedStorage: !Ref DBMaxAllocatedStorage
+      StorageType: !Ref DBStorageType
+      # Iops: !If [IsIOStorage, !Ref Iops, !Ref 'AWS::NoValue']
+      StorageEncrypted: !Ref DBStorageEncrypted
+      MasterUsername: !Ref DBMasterUsername
+      MasterUserPassword: !Ref DBMasterUserPassword
+      VPCSecurityGroups: [!Ref CustomDBSecurityGroup]
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      DBParameterGroupName: !If
+        - IsMySQLEngine
+        - !Ref MySQLParameterGroup
+        - !If
+          - IsMariaDBEngine
+          - !Ref MariaDBParameterGroup
+          - !If
+            - IsPostgreSQLEngine
+            - !Ref PostgreSQLParameterGroup
+            - !Ref SQLServerParameterGroup
+      BackupRetentionPeriod: !Ref DBBackupRetentionPeriod
+      MultiAZ: !Ref DBMultiAZ
+      PubliclyAccessible: !Ref PubliclyAccessible
+      AutoMinorVersionUpgrade: !Ref DBAutoMinorVersionUpgrade
+      AllowMajorVersionUpgrade: !Ref DBAutoMajorVersionUpgrade
+      DeletionProtection: !Ref DBDeletionProtection
+      Port: !Ref DBPort
+      LicenseModel: !Ref LicenseModel
+      EnableCloudwatchLogsExports: !Split [',', !Ref DBCloudwatchLogExports]
+      EnablePerformanceInsights: !Ref EnablePerformanceInsights
+      PerformanceInsightsRetentionPeriod: !If [IsPerformanceInsights, !Ref PerformanceInsightsRetentionPeriod, !Ref 'AWS::NoValue']
+      DeleteAutomatedBackups: !Ref DBDeleteAutomatedBackups
+      CopyTagsToSnapshot: !Ref CopyTagsToSnapshot
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-${Environment}-${DBInstanceIdentifier}"
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Project
+          Value: !Ref ProjectName
+        - !If
+          - HasApplication
+          - Key: Application
+            Value: !Ref Application
+          - !Ref 'AWS::NoValue'
+        - !If
+          - HasApplicationVersion
+          - Key: ApplicationVersion
+            Value: !Ref ApplicationVersion
+          - !Ref 'AWS::NoValue'
+        - !If
+          - HasProjectCostCenter
+          - Key: ProjectCostCenter
+            Value: !Ref ProjectCostCenter
+          - !Ref 'AWS::NoValue'
+        - !If
+          - HasConfidentiality
+          - Key: Confidentiality
+            Value: !Ref Confidentiality
+          - !Ref 'AWS::NoValue'
+        - !If
+          - HasCompliance
+          - Key: Compliance
+            Value: !Ref Compliance
+          - !Ref 'AWS::NoValue'
+
+Outputs:
+  DBInstanceIdentifier:
+    Description: Database instance identifier
+    Value: !Ref DBInstance
+  DBInstanceEndpoint:
+    Description: Database connection endpoint
+    Value: !GetAtt DBInstance.Endpoint.Address
+  DBInstancePort:
+    Description: Database connection port
+    Value: !GetAtt DBInstance.Endpoint.Port
