@@ -133,7 +133,7 @@
   },
   {
     "ParameterKey": "SNSEmailParam",
-    "ParameterValue": "arn:aws:sns:ap-south-1:016063995761:Tech3cd-SNS-UAT"
+    "ParameterValue": "arn:aws:sns:ap-south-1:424570854444:Kavishala"
   }
 
 ]
