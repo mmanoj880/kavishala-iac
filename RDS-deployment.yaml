@@ -1,0 +1,48 @@
+template-file-path: ./Database/CreateRds-ParentStack.yaml
+
+parameters:
+  Application: kavishala
+  ApplicationVersion: 1
+  Compliance: other
+  Confidentiality: private
+  CopyTagsToSnapshot: true
+  CustomDBSecurityGroup: sg-06778bc80bba151b4
+  CustomParameterGroupFamily: postgres17
+  DBAllocatedStorage: 50
+  DBAutoMajorVersionUpgrade: false
+  DBAutoMinorVersionUpgrade: false
+  DBBackupRetentionPeriod: 7
+  DBCloudwatchLogExports: postgresql
+  DBDeleteAutomatedBackups: true
+  DBDeletionProtection: true
+  DBEngineMode: postgres
+  DBEngineVersion: 17.4
+  DBInstanceClass: db.r5.xlarge
+  DBInstanceIdentifier: postgresql-rds
+  DBMasterUsername: kavishalaproduser
+  DBMasterUserPassword: aT3-ipNxUWtnucvGLup0
+  DBMaxAllocatedStorage: 100
+  DBMultiAZ: true
+  DBName: kavishalaprod
+  DBPasswordCreationAndRotationFromSecretsManager: false
+  DBPort: 5432
+  DBStorageEncrypted: true
+  DBStorageType: gp3
+  EnablePerformanceInsights: false
+  Environment: prod
+  # Iops: 
+  LicenseModel: postgresql-license
+  PasswordRotationFrequencyInDays: 90
+  PerformanceInsightsRetentionPeriod: 7
+  PrivateSubnet1: subnet-0f6d416b79354d630
+  PrivateSubnet2: subnet-0ca88eb9397fbf65a
+  ProjectCostCenter: 1
+  ProjectName: kavishala
+  PubliclyAccessible: false
+  PublicSubnet1: subnet-0eb4af4a80301c4e9
+  PublicSubnet2: subnet-02a0bb8f6e0b5a628
+  RotateImmediatelyOnUpdate: true
+  S3BucketToStoreTemplates: kavishala-prod-cloudformation-templates
+  VpcId: vpc-05bba3340d245df66
+
+tags:
