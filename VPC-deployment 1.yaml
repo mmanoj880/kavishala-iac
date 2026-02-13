@@ -1,7 +1,7 @@
 template-file-path: ./Network/CreateNetwork-1NAT.yaml
 
 parameters: 
-    ProjectName: noveum
+    ProjectName: kavishala
     Environment: prod
     NumberOfAZs: 2
     AvailabilityZones: us-east-1a,us-east-1b
