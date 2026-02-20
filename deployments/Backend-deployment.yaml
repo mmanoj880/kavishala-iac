@@ -1,0 +1,37 @@
+template-file-path: ../Compute/CreateCompute-(Standalone+ALB).yaml
+
+parameters:
+  ProjectName: kavishala
+  Environment: dev
+  StandaloneSubnet: subnet-0a1b2c3d4e5f67890
+  StandAloneInstanceAvalilabilityZone: ap-south-1a
+  InstanceName: backend-server
+  ElasticIPforStandAlone: yes
+  VPCName: vpc-0a1b2c3d4e5f67891
+  PrivateSubnet: subnet-0a1b2c3d4e5f67892,subnet-0a1b2c3d4e5f67893
+  PublicSubnet: subnet-0a1b2c3d4e5f67890,subnet-0a1b2c3d4e5f67894
+  SecurityGroupForInstances: sg-0a1b2c3d4e5f67895
+  CustomMetricsS3BucketName: kavishala-dev-ec2-custom-metrics
+  InstanceType: t3.medium
+  MachineType: ubuntu
+  Timezone: India Standard Time
+  Region: ap-south-1
+  ImageIds: Pass-AMI-Manually
+  ImageIdManual: ami-0f58b397bc5c1f2e8
+  KeyName: kavishala-dev-key
+  Tenancy: default
+  DeviceBlockName: /dev/sda1
+  VolumeSizeFortheDevice: 50
+  DeleteVolumeOnTermination: true
+  VolumeEncryption: true
+  EbsOptimisation: true
+  LoadBalancer: no
+  LoadBalancerName: backend-dev-alb
+  LoadBalancerScheme: internal
+  EnableSSL: no
+  ListenerCertificateArn: arn:aws:acm:ap-south-1:123456789012:certificate/a1b2c3d4-e5f6-7890-abcd-ef1234567890
+  ALBSecurityGroup: sg-0a1b2c3d4e5f67896
+
+tags:
+  Environment: dev
+  Project: kavishala

@@ -1,4 +1,4 @@
-template-file-path: ./Database/CreateRds-ParentStack.yaml
+template-file-path: ../Database/CreateRds-ParentStack.yaml
 
 parameters:
   Application: kavishala
@@ -6,9 +6,9 @@ parameters:
   Compliance: other
   Confidentiality: private
   CopyTagsToSnapshot: true
-  CustomDBSecurityGroup: sg-06778bc80bba151b4
+  CustomDBSecurityGroup: sg-0b2c3d4e5f6a78901
   CustomParameterGroupFamily: postgres17
-  DBAllocatedStorage: 50
+  DBAllocatedStorage: 20
   DBAutoMajorVersionUpgrade: false
   DBAutoMinorVersionUpgrade: false
   DBBackupRetentionPeriod: 7
@@ -17,32 +17,33 @@ parameters:
   DBDeletionProtection: true
   DBEngineMode: postgres
   DBEngineVersion: 17.4
-  DBInstanceClass: db.r5.xlarge
-  DBInstanceIdentifier: postgresql-rds
-  DBMasterUsername: kavishalaproduser
-  DBMasterUserPassword: aT3-ipNxUWtnucvGLup0
-  DBMaxAllocatedStorage: 100
-  DBMultiAZ: true
-  DBName: kavishalaprod
+  DBInstanceClass: db.t3.medium
+  DBInstanceIdentifier: postgresql-rds-dev
+  DBMasterUsername: kavishaladevuser
+  DBMasterUserPassword: Kv3!devPgPass2024
+  DBMaxAllocatedStorage: 50
+  DBMultiAZ: false
+  DBName: kavishaladev
   DBPasswordCreationAndRotationFromSecretsManager: false
   DBPort: 5432
   DBStorageEncrypted: true
   DBStorageType: gp3
   EnablePerformanceInsights: false
-  Environment: prod
-  # Iops: 
+  Environment: dev
   LicenseModel: postgresql-license
   PasswordRotationFrequencyInDays: 90
   PerformanceInsightsRetentionPeriod: 7
-  PrivateSubnet1: subnet-0f6d416b79354d630
-  PrivateSubnet2: subnet-0ca88eb9397fbf65a
+  PrivateSubnet1: subnet-0c3d4e5f6a7b89012
+  PrivateSubnet2: subnet-0c3d4e5f6a7b89013
   ProjectCostCenter: 1
   ProjectName: kavishala
   PubliclyAccessible: false
-  PublicSubnet1: subnet-0eb4af4a80301c4e9
-  PublicSubnet2: subnet-02a0bb8f6e0b5a628
+  PublicSubnet1: subnet-0a1b2c3d4e5f67890
+  PublicSubnet2: subnet-0a1b2c3d4e5f67894
   RotateImmediatelyOnUpdate: true
-  S3BucketToStoreTemplates: kavishala-prod-cloudformation-templates
-  VpcId: vpc-05bba3340d245df66
+  S3BucketToStoreTemplates: kavishala-dev-cloudformation-templates
+  VpcId: vpc-0a1b2c3d4e5f67891
 
 tags:
+  Environment: dev
+  Project: kavishala

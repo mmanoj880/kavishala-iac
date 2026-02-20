@@ -1,0 +1,36 @@
+template-file-path: ../Network/CreateNetwork-1NAT.yaml
+
+parameters:
+  ProjectName: kavishala
+  Environment: dev
+  NumberOfAZs: 2
+  AvailabilityZones: ap-south-1a,ap-south-1b
+  VpcCidr: 10.10.0.0/16
+  VpcTenancy: default
+  WantVpcFlowLogs: enable
+  VpcFlowLogStorageType: CloudWatchLogs
+  PublicSubnet0Cidr: 10.10.200.0/24
+  PublicSubnet1Cidr: 10.10.201.0/24
+  PublicSubnet2Cidr: 10.10.202.0/24
+  PublicSubnet3Cidr: 10.10.203.0/24
+  PublicSubnet4Cidr: 10.10.204.0/24
+  PublicSubnet5Cidr: 10.10.205.0/24
+  PrivateSubnet0Cidr: 10.10.0.0/22
+  PrivateSubnet1Cidr: 10.10.4.0/22
+  PrivateSubnet2Cidr: 10.10.8.0/22
+  PrivateSubnet3Cidr: 10.10.12.0/22
+  PrivateSubnet4Cidr: 10.10.16.0/22
+  PrivateSubnet5Cidr: 10.10.20.0/22
+  DataSubnet0Cidr: 10.10.100.0/24
+  DataSubnet1Cidr: 10.10.101.0/24
+  DataSubnet2Cidr: 10.10.102.0/24
+  DataSubnet3Cidr: 10.10.103.0/24
+  DataSubnet4Cidr: 10.10.104.0/24
+  DataSubnet5Cidr: 10.10.105.0/24
+  WantDataBaseTier: yes
+  WantNatGatewayForPrivateSubnets: yes
+  WantNatGatewayForDataBaseSubnets: no
+
+tags:
+  Environment: dev
+  Project: kavishala
