@@ -6,7 +6,7 @@ parameters:
   Compliance: other
   Confidentiality: private
   CopyTagsToSnapshot: true
-  CustomDBSecurityGroup: sg-06778bc80bba151b4
+  CustomDBSecurityGroup: sg-0e5f6a7b8c9d01234
   CustomParameterGroupFamily: postgres17
   DBAllocatedStorage: 50
   DBAutoMajorVersionUpgrade: false
@@ -18,9 +18,9 @@ parameters:
   DBEngineMode: postgres
   DBEngineVersion: 17.4
   DBInstanceClass: db.r5.xlarge
-  DBInstanceIdentifier: postgresql-rds
+  DBInstanceIdentifier: postgresql-rds-prod
   DBMasterUsername: kavishalaproduser
-  DBMasterUserPassword: aT3-ipNxUWtnucvGLup0
+  DBMasterUserPassword: Kv7!prodPgPass2024
   DBMaxAllocatedStorage: 100
   DBMultiAZ: true
   DBName: kavishalaprod
@@ -30,19 +30,20 @@ parameters:
   DBStorageType: gp3
   EnablePerformanceInsights: false
   Environment: prod
-  # Iops: 
   LicenseModel: postgresql-license
   PasswordRotationFrequencyInDays: 90
   PerformanceInsightsRetentionPeriod: 7
-  PrivateSubnet1: subnet-0f6d416b79354d630
-  PrivateSubnet2: subnet-0ca88eb9397fbf65a
+  PrivateSubnet1: subnet-0e5f6a7b8c9d01235
+  PrivateSubnet2: subnet-0e5f6a7b8c9d01236
   ProjectCostCenter: 1
   ProjectName: kavishala
   PubliclyAccessible: false
-  PublicSubnet1: subnet-0eb4af4a80301c4e9
-  PublicSubnet2: subnet-02a0bb8f6e0b5a628
+  PublicSubnet1: subnet-0d4e5f6a7b8c90123
+  PublicSubnet2: subnet-0d4e5f6a7b8c90127
   RotateImmediatelyOnUpdate: true
   S3BucketToStoreTemplates: kavishala-prod-cloudformation-templates
-  VpcId: vpc-05bba3340d245df66
+  VpcId: vpc-0d4e5f6a7b8c90124
 
 tags:
+  Environment: prod
+  Project: kavishala

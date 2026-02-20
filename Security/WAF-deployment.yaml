@@ -1,61 +1,51 @@
 template-file-path: ./Security/aws-waf-security-automations.template.yaml
 
 parameters:
-  # Resource Type
   EndpointType: CloudFront
-  
-  # AWS Managed IP Reputation Rule Groups
+
   ActivateAWSManagedIPRParam: 'yes'
   ActivateAWSManagedAIPParam: 'yes'
-  
-  # AWS Managed Baseline Rule Groups
+
   ActivateAWSManagedRulesParam: 'yes'
   ActivateAWSManagedAPParam: 'yes'
   ActivateAWSManagedKBIParam: 'yes'
-  
-  # AWS Managed Use-case Specific Rule Groups
+
   ActivateAWSManagedSQLParam: 'no'
   ActivateAWSManagedLinuxParam: 'no'
   ActivateAWSManagedPOSIXParam: 'no'
   ActivateAWSManagedWindowsParam: 'no'
   ActivateAWSManagedPHPParam: 'no'
   ActivateAWSManagedWPParam: 'no'
-  
-  # Custom Rule - Scanner & Probes
+
   ActivateScannersProbesProtectionParam: 'yes - AWS Lambda log parser'
   AppAccessLogBucket: 'kavishala-prod-waf-logs'
   AppAccessLogBucketPrefixParam: 'AWSLogs/'
   AppAccessLogBucketLoggingStatusParam: 'no'
   ErrorThreshold: 50
   KeepDataInOriginalS3Location: 'No'
-  
-  # Custom Rule - HTTP Flood
+
   ActivateHttpFloodProtectionParam: 'yes - AWS WAF rate based rule'
   RequestThreshold: 2000
   RequestThresholdByCountryParam: ''
   HTTPFloodAthenaQueryGroupByParam: 'None'
   WAFBlockPeriod: 240
   AthenaQueryRunTimeScheduleParam: 5
-  
-  # Custom Rule - Bad Bot
+
   ActivateBadBotProtectionParam: 'yes'
   ApiGatewayBadBotCWRoleParam: ''
-  
-  # Custom Rule - Third Party IP Reputation Lists
+
   ActivateReputationListsProtectionParam: 'yes'
-  
-  # Legacy Custom Rules
+
   ActivateSqlInjectionProtectionParam: 'no'
   SqlInjectionProtectionSensitivityLevelParam: 'LOW'
   ActivateCrossSiteScriptingProtectionParam: 'no'
-  
-  # IP Retention Settings
+
   IPRetentionPeriodAllowedParam: -1
   IPRetentionPeriodDeniedParam: -1
-  SNSEmailParam: ''
-  
-  # Advanced Settings
+  SNSEmailParam: 'arn:aws:sns:ap-south-1:123456789012:kavishala-prod-alerts'
+
   LogGroupRetentionParam: 365
 
 tags:
-
+  Environment: prod
+  Project: kavishala
