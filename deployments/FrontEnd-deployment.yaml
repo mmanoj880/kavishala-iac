@@ -1,11 +1,11 @@
-template-file-path: ./Compute/CreateCompute-(Standalone+ALB).yaml
+template-file-path: ../Compute/CreateCompute-(Standalone+ALB).yaml
 
 parameters:
   ProjectName: kavishala
   Environment: prod
   StandaloneSubnet: subnet-0d4e5f6a7b8c90123
   StandAloneInstanceAvalilabilityZone: ap-south-1a
-  InstanceName: backend-server
+  InstanceName: app-server
   ElasticIPforStandAlone: yes
   VPCName: vpc-0d4e5f6a7b8c90124
   PrivateSubnet: subnet-0d4e5f6a7b8c90125,subnet-0d4e5f6a7b8c90126
@@ -25,10 +25,10 @@ parameters:
   DeleteVolumeOnTermination: true
   VolumeEncryption: true
   EbsOptimisation: true
-  LoadBalancer: no
-  LoadBalancerName: backend-prod-alb
-  LoadBalancerScheme: internal
-  EnableSSL: no
+  LoadBalancer: yes
+  LoadBalancerName: app-prod-alb
+  LoadBalancerScheme: internet-facing
+  EnableSSL: yes
   ListenerCertificateArn: arn:aws:acm:ap-south-1:123456789012:certificate/b2c3d4e5-f6a7-8901-bcde-f12345678901
   ALBSecurityGroup: sg-0d4e5f6a7b8c90129
 

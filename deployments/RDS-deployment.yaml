@@ -1,4 +1,4 @@
-template-file-path: ./Database/CreateRds-ParentStack.yaml
+template-file-path: ../Database/CreateRds-ParentStack.yaml
 
 parameters:
   Application: kavishala

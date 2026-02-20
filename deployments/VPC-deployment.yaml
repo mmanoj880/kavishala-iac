@@ -1,4 +1,4 @@
-template-file-path: ./Network/CreateNetwork-1NAT.yaml
+template-file-path: ../Network/CreateNetwork-1NAT.yaml
 
 parameters:
   ProjectName: kavishala

@@ -1,4 +1,4 @@
-template-file-path: ./Security/aws-waf-security-automations.template.yaml
+template-file-path: ../Security/aws-waf-security-automations.template.yaml
 
 parameters:
   EndpointType: CloudFront
